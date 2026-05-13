@@ -1,0 +1,33 @@
+# Module 4: Matrix fan-out plus reusable workflow call
+name: module-04-matrix-and-reuse
+on:
+  pull_request:
+jobs:
+  matrix-tests:
+    strategy:
+      fail-fast: false  # keep collecting data even if one combo fails
+      matrix:
+        node: [16, 18]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests on ${{ matrix.os }}
+        run: npm test
+
+  reusable-smoke:
+    needs: matrix-tests
+    uses: acme-org/github-actions-templates/.github/workflows/reusable-smoke.yml@main
+    secrets: inherit  # forward secrets so the reusable workflow can deploy
+    with:
+      environment: staging  # demonstrates workflow_call inputs

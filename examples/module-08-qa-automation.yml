@@ -1,0 +1,55 @@
+# Module 8: Contract -> API -> UI QA automation chain
+name: module-08-qa-automation
+on:
+  schedule:
+    - cron: "0 2 * * *"  # nightly regression
+  workflow_dispatch:  # manual reruns for triage
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Pact contracts
+        run: npm run pact:verify
+
+  api:
+    needs: contract  # only run API tests if contracts pass
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Run Newman suite
+        run: |
+          npm install -g newman
+          newman run tests/api.postman_collection.json --reporters junit
+
+      - name: Upload API evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-reports
+          path: newman/**
+
+  selenium:
+    needs: api  # UI tests only after lower layers pass
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chrome, firefox]
+    services:
+      selenium:
+        image: selenium/standalone-${{ matrix.browser }}:4.21.0
+        ports: ["4444:4444"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Execute Selenium suite
+        run: dotnet test UiTests/UiTests.csproj --logger "trx"
+
+      - name: Publish screenshots and logs
+        if: always()  # capture evidence even on failures
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-${{ matrix.browser }}
+          path: UiTests/TestResults/**

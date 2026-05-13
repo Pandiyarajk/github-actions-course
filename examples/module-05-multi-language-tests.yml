@@ -1,0 +1,66 @@
+# Module 5: Multi-language quality portal
+name: module-05-multi-language-tests
+on:
+  push:
+    branches:
+      - main
+jobs:
+  quality-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - language: python
+            version: "3.11"
+          - language: node
+            version: "18"
+          - language: dotnet
+            version: "8.0.x"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python toolchain
+        if: ${{ matrix.language == 'python' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.version }}
+
+      - name: Setup Node toolchain
+        if: ${{ matrix.language == 'node' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.version }}
+
+      - name: Setup .NET toolchain
+        if: ${{ matrix.language == 'dotnet' }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.version }}
+
+      - name: Python tests
+        if: ${{ matrix.language == 'python' }}
+        run: |
+          pip install -r requirements.txt
+          pytest --junitxml=reports/python.xml --cov=app --cov-fail-under=80
+
+      - name: Node tests
+        if: ${{ matrix.language == 'node' }}
+        run: |
+          npm ci
+          npm run lint
+          npm test -- --coverage
+
+      - name: .NET tests
+        if: ${{ matrix.language == 'dotnet' }}
+        run: |
+          dotnet restore
+          dotnet test tests/UiTests.csproj --logger "trx;LogFileName=results.trx"
+
+      - name: Publish evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-${{ matrix.language }}
+          path: |
+            reports/**
+            tests/TestResults/**

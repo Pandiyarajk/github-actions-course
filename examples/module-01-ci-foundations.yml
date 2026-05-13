@@ -1,0 +1,26 @@
+# Module 1: CI/CD foundations with fast feedback
+name: module-01-ci-foundations
+on:
+  push:
+    branches:
+      - main  # keep demo noise low
+  workflow_dispatch:  # allow manual reruns during class
+jobs:
+  sanity:
+    name: Quick lint + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository  # Always begin by syncing sources
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run smoke tests
+        run: npm test -- --runInBand
+
+      - name: Publish coverage artifact  # Shows how QA can grab evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/

@@ -1,0 +1,59 @@
+# Module 7: Staged release with approvals
+name: module-07-release-automation
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump (patch/minor/major)"
+        required: false
+permissions:
+  contents: write  # needed for tagging + releases
+jobs:
+  package:
+    name: Build and store artifact
+    runs-on: ubuntu-latest
+    environment: staging  # auto deploys can be guarded via reviewers
+    steps:
+      - name: Checkout with tags for versioning
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install + build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  release:
+    name: Promote to production
+    needs: package
+    runs-on: ubuntu-latest
+    environment:
+      name: production  # tie to environment approvals
+      url: https://prod.example.com
+    steps:
+      - name: Download packaged artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      - name: Bump version and tag
+        run: |
+          bump=${{ github.event.inputs.bump || 'patch' }}
+          npx standard-version --release-as "$bump"
+          git push --follow-tags
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0)
+          gh release create "$latest_tag" --generate-notes

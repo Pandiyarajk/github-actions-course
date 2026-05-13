@@ -1,0 +1,55 @@
+name: reusable-gcp-deploy
+# Reusable workflow for GCP Cloud Run deployments via OIDC.
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Artifact image ref"
+        required: true
+        type: string
+      service:
+        description: "Cloud Run service"
+        required: true
+        type: string
+      region:
+        description: "GCP region"
+        required: true
+        type: string
+      release_id:
+        description: "Release identifier"
+        required: true
+        type: string
+    secrets:
+      gcp_workload_identity_provider:
+        required: true
+      gcp_service_account:
+        required: true
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: gcp-${{ inputs.region }}
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.gcp_workload_identity_provider }}
+          service_account: ${{ secrets.gcp_service_account }}
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ inputs.service }}
+          image: ${{ inputs.image }}
+          region: ${{ inputs.region }}
+          flags: "--revision-suffix=${{ inputs.release_id }}"
+
+      - name: Emit summary
+        run: |
+          echo "### GCP deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Service: ${{ inputs.service }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Region: ${{ inputs.region }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image: ${{ inputs.image }}" >> "$GITHUB_STEP_SUMMARY"

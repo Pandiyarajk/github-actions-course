@@ -1,0 +1,28 @@
+# Module 2: Job relationships, expressions, and outputs
+name: module-02-syntax-and-expressions
+on:
+  pull_request:
+    types: [opened, synchronize]  # keep runs focused on code changes
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      bundle-id: ${{ steps.meta.outputs.bundle-id }}  # expose data to downstream jobs
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Stamp bundle metadata
+        id: meta
+        run: echo "bundle-id=web-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build app
+        run: npm run build
+
+  smoke:
+    needs: build  # ensures bundle assets exist
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'docs-only') }}  # skip low-signal PRs
+    steps:
+      - name: Announce release under test
+        run: echo "Testing bundle ${{ needs.build.outputs.bundle-id }}"

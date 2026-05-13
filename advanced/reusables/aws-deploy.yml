@@ -1,0 +1,76 @@
+name: reusable-aws-deploy
+# Reusable workflow for deploying to AWS via OIDC.
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Container image to deploy"
+        required: true
+        type: string
+      region:
+        description: "AWS region"
+        required: true
+        type: string
+      release_id:
+        description: "Release / change identifier"
+        required: true
+        type: string
+    secrets:
+      aws_role_arn:
+        required: true
+      aws_account_id:
+        required: true
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: aws-${{ inputs.region }}
+    steps:
+      - name: Assume AWS role via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.aws_role_arn }}
+          aws-region: ${{ inputs.region }}
+          role-session-name: gha-${{ inputs.release_id }}
+
+      - name: Render task definition
+        run: |
+          cat <<JSON > taskdef.json
+          {
+            "containerDefinitions": [
+              {
+                "name": "web",
+                "image": "${{ inputs.image }}",
+                "essential": true,
+                "environment": [
+                  {"name": "RELEASE_ID", "value": "${{ inputs.release_id }}"}
+                ]
+              }
+            ],
+            "family": "gha-preview"
+          }
+          JSON
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster production \
+            --service web \
+            --task-definition file://taskdef.json \
+            --force-new-deployment
+
+      - name: Publish deployment note
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.summary
+              .addHeading('AWS deployment complete')
+              .addList([
+                `Region: ${{ inputs.region }}`,
+                `Image: ${{ inputs.image }}`,
+                `Release: ${{ inputs.release_id }}`
+              ])
+              .write()

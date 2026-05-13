@@ -1,0 +1,162 @@
+name: advanced-nightly-security
+# Advanced: scheduled SAST + dependency review + container scanning.
+on:
+  schedule:
+    - cron: "0 2 * * *" # nightly at 02:00 UTC
+  workflow_dispatch:
+permissions:
+  contents: read
+  security-events: write
+  packages: write
+  actions: read
+  issues: write
+concurrency:
+  group: nightly-security
+  cancel-in-progress: false
+jobs:
+  codeql-sast:
+    name: CodeQL multi-language analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript,python
+
+      - name: Autobuild (polyglot)
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze and upload SARIF
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: nightly-security
+
+  dependency-review:
+    name: Dependency review drift check
+    needs: codeql-sast
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch for diff
+        run: git fetch origin ${{ github.default_branch }}
+
+      - name: Run dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          base-ref: origin/${{ github.default_branch }}
+          head-ref: HEAD
+          allow-licenses: Apache-2.0,MIT,BSD-3-Clause
+          fail-on-severity: high
+          comment-summary-in-pr: false
+
+      - name: Upload dependency snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-review-report
+          path: dependency-review-report.json
+        if: success() && hashFiles('dependency-review-report.json') != ''
+
+  container-scan:
+    name: Container build + scan
+    needs: codeql-sast
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}/nightly-app
+      IMAGE_TAG: nightly-${{ github.run_number }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build container image (cache aware)
+        run: |
+          docker build \
+            --pull \
+            --tag "$IMAGE_NAME:$IMAGE_TAG" \
+            --build-arg BUILD_SHA=${GITHUB_SHA} \
+            .
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.21.3
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          format: sarif
+          output: trivy-results.sarif
+          vuln-type: os,library
+          severity: CRITICAL,HIGH,MEDIUM
+
+      - name: Upload container scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-vuln-report
+          path: trivy-results.sarif
+
+      - name: Push image to GHCR (nightly tag)
+        env:
+          CR_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$CR_PAT" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push "$IMAGE_NAME:$IMAGE_TAG"
+
+  nightly-summary:
+    name: Aggregate + notify
+    needs:
+      - dependency-review
+      - container-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Download reports
+        uses: actions/download-artifact@v4
+        with:
+          path: reports
+        continue-on-error: true
+
+      - name: Summarize findings
+        id: summary
+        run: |
+          critical=$(grep -R "CRITICAL" -c reports 2>/dev/null || echo 0)
+          high=$(grep -R "HIGH" -c reports 2>/dev/null || echo 0)
+          echo "critical=$critical" >> "$GITHUB_OUTPUT"
+          echo "high=$high" >> "$GITHUB_OUTPUT"
+          {
+            echo "Nightly Security Digest"
+            echo "======================="
+            echo "Critical findings: $critical"
+            echo "High findings: $high"
+            echo "Image tag: $IMAGE_TAG"
+          } >> security-digest.txt
+
+      - name: Attach digest to run summary
+        run: |
+          echo "### Nightly security snapshot" >> "$GITHUB_STEP_SUMMARY"
+          echo "* Critical: ${{ steps.summary.outputs.critical }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "* High: ${{ steps.summary.outputs.high }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "* Image tag: ${{ env.IMAGE_TAG }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open issue when thresholds exceeded
+        if: ${{ steps.summary.outputs.critical != '0' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Nightly security alert #${context.runNumber}`,
+              body: [
+                'Nightly scan detected critical findings.',
+                `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                'Please triage within SLA.'
+              ].join('\n')
+            })

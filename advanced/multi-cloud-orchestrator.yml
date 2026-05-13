@@ -1,0 +1,122 @@
+name: advanced-multi-cloud-orchestrator
+# Advanced: orchestrates multi-cloud deployments via reusable workflows + OIDC.
+# Copy the reusable workflow files under `.github/workflows/` in a live repo.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      deploy_aws:
+        description: "Deploy to AWS?"
+        type: boolean
+        default: true
+      deploy_azure:
+        description: "Deploy to Azure?"
+        type: boolean
+        default: true
+      deploy_gcp:
+        description: "Deploy to GCP?"
+        type: boolean
+        default: true
+      image_tag:
+        description: "Override container tag"
+        required: false
+        type: string
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+concurrency:
+  group: multi-cloud-${{ github.ref_name }}
+  cancel-in-progress: true
+env:
+  IMAGE_REPO: ghcr.io/${{ github.repository }}/app
+jobs:
+  build-promote:
+    name: Build + promote artifact
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      release_id: ${{ steps.meta.outputs.release_id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine release metadata
+        id: meta
+        run: |
+          tag="${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.image_tag || format('manual-{0}', github.run_number) }}"
+          echo "image=${IMAGE_REPO}:$tag" >> "$GITHUB_OUTPUT"
+          echo "release_id=$tag" >> "$GITHUB_OUTPUT"
+          echo "Using image ${IMAGE_REPO}:$tag"
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build + push image
+        run: |
+          docker build -t "${{ steps.meta.outputs.image }}" .
+          docker push "${{ steps.meta.outputs.image }}"
+
+      - name: Upload SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.meta.outputs.image }}
+
+  deploy-aws:
+    name: AWS deployment
+    needs: build-promote
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_aws) || (github.event_name != 'workflow_dispatch') }}
+    uses: ./advanced/reusables/aws-deploy.yml
+    with:
+      image: ${{ needs.build-promote.outputs.image }}
+      region: us-east-1
+      release_id: ${{ needs.build-promote.outputs.release_id }}
+    secrets: inherit
+
+  deploy-azure:
+    name: Azure deployment
+    needs: build-promote
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_azure) || (github.event_name != 'workflow_dispatch') }}
+    uses: ./advanced/reusables/azure-deploy.yml
+    with:
+      image: ${{ needs.build-promote.outputs.image }}
+      resource_group: rg-actions
+      container_app: customer-facing-api
+      release_id: ${{ needs.build-promote.outputs.release_id }}
+    secrets: inherit
+
+  deploy-gcp:
+    name: GCP deployment
+    needs: build-promote
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_gcp) || (github.event_name != 'workflow_dispatch') }}
+    uses: ./advanced/reusables/gcp-deploy.yml
+    with:
+      image: ${{ needs.build-promote.outputs.image }}
+      service: customer-facing-api
+      region: us-central1
+      release_id: ${{ needs.build-promote.outputs.release_id }}
+    secrets: inherit
+
+  finalize:
+    name: Finalize + notify
+    needs:
+      - build-promote
+      - deploy-aws
+      - deploy-azure
+      - deploy-gcp
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Summarize roll-out
+        run: |
+          echo "### Multi-cloud deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release: ${{ needs.build-promote.outputs.release_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image: ${{ needs.build-promote.outputs.image }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- AWS: ${{ needs.deploy-aws.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Azure: ${{ needs.deploy-azure.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- GCP: ${{ needs.deploy-gcp.result }}" >> "$GITHUB_STEP_SUMMARY"

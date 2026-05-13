@@ -1,0 +1,59 @@
+name: reusable-azure-deploy
+# Reusable workflow for Azure Container Apps via federated credentials.
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: "Container image to deploy"
+        required: true
+        type: string
+      resource_group:
+        description: "Target resource group"
+        required: true
+        type: string
+      container_app:
+        description: "Azure Container App name"
+        required: true
+        type: string
+      release_id:
+        description: "Release identifier"
+        required: true
+        type: string
+    secrets:
+      azure_client_id:
+        required: true
+      azure_tenant_id:
+        required: true
+      azure_subscription_id:
+        required: true
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: azure-${{ inputs.resource_group }}
+    steps:
+      - name: Azure login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.azure_client_id }}
+          tenant-id: ${{ secrets.azure_tenant_id }}
+          subscription-id: ${{ secrets.azure_subscription_id }}
+
+      - name: Deploy container revision
+        run: |
+          az containerapp update \
+            --name "${{ inputs.container_app }}" \
+            --resource-group "${{ inputs.resource_group }}" \
+            --image "${{ inputs.image }}" \
+            --revision-suffix "${{ inputs.release_id }}" \
+            --set-env-vars RELEASE_ID=${{ inputs.release_id }}
+
+      - name: Attach summary
+        run: |
+          echo "### Azure deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- RG: ${{ inputs.resource_group }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- App: ${{ inputs.container_app }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image: ${{ inputs.image }}" >> "$GITHUB_STEP_SUMMARY"

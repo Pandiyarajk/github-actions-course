@@ -1,0 +1,39 @@
+# Module 10: Cross-channel notifications
+name: module-10-notifications
+on:
+  workflow_run:
+    workflows:
+      - module-05-multi-language-tests  # watch the heavy quality workflow
+    types: [completed]
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack failure alert
+        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": ":rotating_light: `${{ github.event.workflow_run.name }}` failed. Logs: ${{ github.event.workflow_run.html_url }}"
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Teams digest
+        uses: aliencube/microsoft-teams-actions@v0.9.0
+        with:
+          webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
+          title: "Nightly summary"
+          summary: "${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}"
+          text: "Artifacts: ${{ github.event.workflow_run.artifacts_url }}"
+
+      - name: Send email fallback
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.example.com
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "Workflow ${{ github.event.workflow_run.conclusion }}"
+          body: "Inspect ${{ github.event.workflow_run.html_url }} for details."
+          to: qa-team@example.com

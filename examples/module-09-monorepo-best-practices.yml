@@ -1,0 +1,54 @@
+# Module 9: Monorepo-aware workflow with selective triggers
+name: module-09-monorepo-best-practices
+on:
+  pull_request:
+    paths:
+      - "services/**"
+      - "qa/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+      qa: ${{ steps.filter.outputs.qa }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Map paths to services
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api:
+              - 'services/api/**'
+            web:
+              - 'services/web/**'
+            qa:
+              - 'qa/**'
+
+  api-tests:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.api == 'true' }}  # skip if API untouched
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pytest services/api/tests
+
+  web-tests:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.web == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm --prefix services/web ci && npm --prefix services/web test
+
+  qa-lint:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.qa == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint shared QA assets
+        run: npm --prefix qa lint
