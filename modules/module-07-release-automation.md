@@ -5,97 +5,97 @@
 
 ## Learning Objectives
 
-- Separate build and deployment stages.
-- Use environments, approvals, tags, and release evidence.
-- Create deployment workflows with rollback awareness.
+- Separate the regression-gate stage from the release stage.
+- Use environments, approvals, tags, and release evidence (Allure reports, Zephyr cycles).
+- Create release workflows with rollback awareness.
 
 ## Key Concepts
 
-environments, approvals, concurrency, immutable artifacts, tags, releases
+environments, approvals, concurrency, immutable Allure artifacts, tags, GitHub releases, Zephyr Scale test cycles
 
 ## Expected Outcome
 
-You can design deployment pipelines with audit trails, approvals, and release markers.
+You can design release pipelines for a test-automation suite with audit trails, approvals, and release markers.
 
 ## Concept Flow
 
 ```text
-Main Branch -> Build Artifact -> Staging Deploy -> Approval Gate -> Production Deploy -> Tag / Release
+Main Branch -> Regression Gate (behave) -> Allure Artifact -> Approval Gate -> Zephyr Cycle -> Tag / GitHub Release
 ```
 
 ---
 
 ## ELI5 Explanation
 
-Deployment is moving your app to a place where users can use it. A release is a labeled package of changes. Tags are bookmarks pointing to exact versions of your code.
+In a test-automation context a "release" is not shipping an app, it is certifying a version. You run the full regression suite as a gate, label the results, and publish a record so everyone knows exactly which version was tested. Tags are bookmarks pointing to the exact commit that was certified.
 
 ## Technical Explanation
 
-Deployment workflows often use environments, approvals, concurrency, version tags, release notes, artifacts, and rollback plans. Production pipelines should separate build and deploy, promote immutable artifacts, and use manual approvals for high-risk environments.
+Release workflows for desktop/UI and web automation suites use environments, approvals, concurrency, version tags, release notes, Allure artifacts, and a rollback plan. A production release should separate the regression gate from the release step, promote the same immutable Allure artifact, and require manual approval before creating a Zephyr Scale test cycle and a GitHub Release with the `gh` CLI.
 
 ## Real-World Use Case
 
-When code merges to `main`, the app deploys to staging automatically. Production deployment requires manual approval and creates a GitHub release.
+When code merges to `main`, the full Behave + Selenium regression suite runs automatically on a self-hosted runner (staging). A production release requires manual approval, then creates a Zephyr Scale test cycle for the release version and publishes a GitHub Release.
 
 ## When To Use
 
-- Deployment steps are repeatable.
-- You need audit trails.
-- You want approval gates.
-- You need release notes and versioning.
+- The regression suite is repeatable and reliable.
+- You need audit trails (which version was certified, by whom).
+- You want approval gates before publishing a release.
+- You need release notes, Zephyr cycles, and versioning.
 
 ## When NOT To Use
 
-- The system is not tested enough.
-- Rollback is manual or unclear.
+- The suite is flaky or not trusted yet.
+- Rollback (re-running an older tagged suite) is manual or unclear.
 - Compliance requires stricter human approval.
 
 ## Common Mistakes
 
-- Deploying directly from untested source.
-- No concurrency control.
-- Rebuilding separately for staging and production.
-- Missing rollback strategy.
+- Releasing from a commit whose regression suite never passed.
+- No concurrency control (two releases racing for the same Zephyr cycle).
+- Re-running regression separately for staging and the release record.
+- Missing rollback strategy (no tag to re-run the previous version).
 
 ## Debugging Tips
 
-- Use environments to track deployments.
-- Add `concurrency` to prevent overlapping deploys.
-- Store deployment artifacts.
-- Log deployed version and commit SHA.
+- Use environments to track who approved each release.
+- Add `concurrency` to prevent overlapping release runs.
+- Store the Allure report as an immutable artifact.
+- Log the certified version and commit SHA in the release notes.
 
 ## Minimal Workflow Example
 
 ```yaml
-name: Manual Deploy
+name: Manual Release
 
 on: workflow_dispatch
 
 jobs:
-  deploy:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Run sample deployment command
-        run: echo "Deploying commit ${{ github.sha }}"
+      - name: Announce release candidate
+        run: echo "Certifying commit ${{ github.sha }}"
 ```
 
 ### YAML Explanation
 
-- `workflow_dispatch` makes deployment manual.
-- The job runs on an Ubuntu runner.
-- `${{ github.sha }}` identifies the exact commit being deployed.
+- `workflow_dispatch` makes the release manual.
+- The job runs on a GitHub-hosted runner.
+- `${{ github.sha }}` identifies the exact commit being certified.
 
 ### Step-by-Step Execution
 
-1. User manually starts workflow.
-2. Runner starts deployment job.
-3. Command prints the deployed commit.
-4. In real systems, this step calls deployment scripts.
+1. User manually starts the workflow.
+2. Runner starts the release job.
+3. Command prints the certified commit.
+4. In real pipelines, this step runs the regression gate and creates the release.
 
 ## Production Workflow Example
 
 ```yaml
-name: Staging and Production Deploy
+name: Regression Gate and Production Release
 
 on:
   push:
@@ -107,78 +107,91 @@ permissions:
   deployments: write
 
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  regression-gate:
+    runs-on: [self-hosted, server1]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Build application
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
         run: |
-          mkdir -p dist
-          echo "build from $GITHUB_SHA" > dist/version.txt
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-build
-          path: dist/
-
-  deploy-staging:
-    needs: build
-    environment: staging
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app-build
-          path: dist/
-      - name: Deploy to staging
-        run: echo "Deploy staging using dist/"
-
-  deploy-production:
-    needs: deploy-staging
-    environment: production
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app-build
-          path: dist/
-      - name: Deploy to production
-        run: echo "Deploy production using approved artifact"
-      - name: Create release tag
+          cd your-solution-root-folder-name
+          pip install -r requirements.txt
+          pip install behave selenium allure-behave
+      - name: Run regression suite (gate)
         run: |
-          git tag "release-${{ github.run_number }}"
-          git push origin "release-${{ github.run_number }}"
+          cd your-solution-root-folder-name
+          behave --tags=regression -f allure_behave.formatter:AllureFormatter -o allure-results
+      - name: Upload Allure report
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-report
+          path: your-solution-root-folder-name/allure-results/
+
+  release:
+    needs: regression-gate
+    environment:
+      name: production
+      url: https://prod.your-domain.com
+    runs-on: [self-hosted, server1]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Download Allure report
+        uses: actions/download-artifact@v8
+        with:
+          name: allure-report
+          path: allure-results/
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Create Zephyr Scale test cycle for release
+        env:
+          ZEPHYR_SCALE_TOKEN: ${{ secrets.ZEPHYR_SCALE_TOKEN }}
+          ZEPHYR_CYCLE_ID: ${{ secrets.ZEPHYR_CYCLE_ID }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+        run: |
+          pip install zephyr-scale-test-cycle
+          zephyr-scale-test-cycle create --name "Release ${{ github.run_number }}" --results allure-results/
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "release-${{ github.run_number }}" \
+            --title "Release ${{ github.run_number }}" \
+            --notes "Regression certified on ${{ github.sha }}"
 ```
 
 ### YAML Explanation
 
-- `concurrency` prevents overlapping deployments.
-- `build` creates one artifact.
-- Staging and production deploy the same artifact.
-- `environment: production` can require approval.
-- The release tag identifies the deployed run.
+- `concurrency` prevents overlapping release runs.
+- `regression-gate` runs the full Behave suite once on `server1` and uploads the Allure report.
+- The `release` job promotes the same Allure artifact instead of re-running tests.
+- `environment: production` with a `url` can require manual approval.
+- A Zephyr Scale cycle plus `gh release create` form the release record.
 
 ### Expected Output
 
-- Build artifact is created once.
-- Staging deploy runs first.
-- Production waits for environment approval.
-- Release tag points to deployed commit.
+- The Allure report is created once by the gate.
+- The regression gate runs first and must pass.
+- The release job waits for production environment approval.
+- A Zephyr cycle and a GitHub Release tag point to the certified commit.
 
 ## Labs
 
 | Difficulty | Task | Expected Output |
 | --- | --- | --- |
-| Beginner | Create a manual deployment workflow. | Manual deploy runs successfully. |
-| Intermediate | Add staging and production environments. | Production waits for approval. |
-| Challenge | Create a release tag after production deploy. | Tag appears in repository. |
+| Beginner | Create a manual release workflow. | Manual release runs successfully. |
+| Intermediate | Add a regression-gate job and a production environment. | Release waits for approval. |
+| Challenge | Create a Zephyr cycle and GitHub Release after the gate. | Cycle and release tag appear. |
 
 ---
 

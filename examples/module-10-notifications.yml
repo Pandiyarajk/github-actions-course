@@ -1,39 +1,121 @@
-# Module 10: Cross-channel notifications
+# Module 10: Email notifications after nightly regression — Python SMTP
 name: module-10-notifications
 on:
   workflow_run:
     workflows:
-      - module-05-multi-language-tests  # watch the heavy quality workflow
+      - module-08-qa-automation  # watch the nightly BDD regression
     types: [completed]
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Slack failure alert
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install report analyzer
+        run: pip install allure-report-analyzer
+
+      - name: Send failure email
         if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            {
-              "text": ":rotating_light: `${{ github.event.workflow_run.name }}` failed. Logs: ${{ github.event.workflow_run.html_url }}"
-            }
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_CC: ${{ secrets.EMAIL_CC }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+        run: |
+          python - <<'EOF'
+          import os, smtplib, textwrap
+          from email.mime.multipart import MIMEMultipart
+          from email.mime.text import MIMEText
 
-      - name: Teams digest
-        uses: aliencube/microsoft-teams-actions@v0.9.0
-        with:
-          webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
-          title: "Nightly summary"
-          summary: "${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}"
-          text: "Artifacts: ${{ github.event.workflow_run.artifacts_url }}"
+          workflow = os.environ["WORKFLOW_NAME"]
+          url = os.environ["WORKFLOW_URL"]
+          run = os.environ["RUN_NUMBER"]
 
-      - name: Send email fallback
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.example.com
-          username: ${{ secrets.SMTP_USER }}
-          password: ${{ secrets.SMTP_PASS }}
-          subject: "Workflow ${{ github.event.workflow_run.conclusion }}"
-          body: "Inspect ${{ github.event.workflow_run.html_url }} for details."
-          to: qa-team@example.com
+          subject = f"❌ Nightly Regression Failed: {workflow} #{run}"
+          body = textwrap.dedent(f"""
+          <html><body style="font-family:Segoe UI,sans-serif;color:#334155;">
+            <h2 style="color:#ef4444;">Nightly Regression Failed</h2>
+            <p>The nightly BDD regression run <strong>#{run}</strong> failed.</p>
+            <p><a href="{url}">View workflow run logs</a></p>
+            <p>Please investigate and re-run failed scenarios as needed.</p>
+          </body></html>
+          """).strip()
+
+          msg = MIMEMultipart()
+          msg["From"] = os.environ.get("EMAIL_FROM", os.environ["EMAIL_USER"])
+          msg["To"] = os.environ["EMAIL_TO"]
+          cc = os.environ.get("EMAIL_CC", "")
+          if cc:
+              msg["CC"] = cc
+          msg["Subject"] = subject
+          msg.attach(MIMEText(body, "html"))
+
+          recipients = [x.strip() for x in os.environ["EMAIL_TO"].split(",")]
+          if cc:
+              recipients += [x.strip() for x in cc.split(",") if x.strip()]
+
+          smtp = smtplib.SMTP(os.environ["SMTP_HOST"], int(os.environ["SMTP_PORT"]))
+          smtp.starttls()
+          smtp.login(os.environ["EMAIL_USER"], os.environ["EMAIL_PASS"])
+          smtp.sendmail(msg["From"], recipients, msg.as_string())
+          smtp.quit()
+          print("Failure notification sent")
+          EOF
+
+      - name: Send success summary email
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+        run: |
+          python - <<'EOF'
+          import os, smtplib, textwrap
+          from email.mime.multipart import MIMEMultipart
+          from email.mime.text import MIMEText
+
+          workflow = os.environ["WORKFLOW_NAME"]
+          url = os.environ["WORKFLOW_URL"]
+          run = os.environ["RUN_NUMBER"]
+
+          subject = f"✅ Nightly Regression Passed: {workflow} #{run}"
+          body = textwrap.dedent(f"""
+          <html><body style="font-family:Segoe UI,sans-serif;color:#334155;">
+            <h2 style="color:#22c55e;">Nightly Regression Passed</h2>
+            <p>The nightly BDD regression run <strong>#{run}</strong> completed successfully.</p>
+            <p><a href="{url}">View workflow run and Allure report artifacts</a></p>
+          </body></html>
+          """).strip()
+
+          msg = MIMEMultipart()
+          msg["From"] = os.environ.get("EMAIL_FROM", os.environ["EMAIL_USER"])
+          msg["To"] = os.environ["EMAIL_TO"]
+          msg["Subject"] = subject
+          msg.attach(MIMEText(body, "html"))
+
+          recipients = [x.strip() for x in os.environ["EMAIL_TO"].split(",")]
+          smtp = smtplib.SMTP(os.environ["SMTP_HOST"], int(os.environ["SMTP_PORT"]))
+          smtp.starttls()
+          smtp.login(os.environ["EMAIL_USER"], os.environ["EMAIL_PASS"])
+          smtp.sendmail(msg["From"], recipients, msg.as_string())
+          smtp.quit()
+          print("Success notification sent")
+          EOF

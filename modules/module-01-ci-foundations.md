@@ -27,21 +27,21 @@ Code Change -> GitHub Event -> Workflow File -> Runner -> Job -> Step -> Status 
 
 ## ELI5 Explanation
 
-GitHub Actions is a robot assistant inside your repository. When something happens, such as pushing code or opening a pull request, the robot can run instructions: install dependencies, run tests, build the app, or deploy it.
+GitHub Actions is a robot assistant inside your repository. When something happens, such as pushing code or opening a pull request, the robot can run instructions: install Python dependencies, run your Behave (BDD) suites, drive Selenium browsers, or email an Allure report.
 
 ## Technical Explanation
 
-A GitHub Actions workflow is a YAML file stored in `.github/workflows/`. It is triggered by GitHub events such as `push`, `pull_request`, `workflow_dispatch`, or `schedule`. Each workflow contains jobs. Each job runs on a runner. Each job contains steps that either run shell commands or call reusable actions.
+A GitHub Actions workflow is a YAML file stored in `.github/workflows/`. It is triggered by GitHub events such as `push`, `pull_request`, `workflow_dispatch`, or `schedule`. Each workflow contains jobs. Each job runs on a runner. Each job contains steps that either run shell commands or call reusable actions. In real-world projects, web automation jobs run Selenium + Behave on GitHub-hosted `ubuntu-latest`, while desktop/UI regression jobs run on Windows self-hosted runners labeled `server1` through `server4`.
 
 ## Real-World Use Case
 
-A team wants every pull request to automatically run unit tests before allowing merge.
+A team wants every pull request to automatically run the smoke suite (`behave --tags=smoke`) before allowing merge, so broken UI flows never reach `main`.
 
 ## When To Use
 
 - You want CI/CD directly integrated with GitHub.
-- You need automated testing on pull requests.
-- You want repeatable build, test, release, or deployment automation.
+- You need automated Behave/Selenium testing on pull requests.
+- You want repeatable test, report, and notification automation (Allure reports, SMTP email, Zephyr Scale + Jira updates).
 
 ## When NOT To Use
 
@@ -61,7 +61,7 @@ A team wants every pull request to automatically run unit tests before allowing 
 - Check the Actions tab for workflow run logs.
 - Verify the workflow file exists on the branch where the event happened.
 - Use `workflow_dispatch` while learning so you can trigger manually.
-- Add `run: pwd && ls` to inspect runner state.
+- Add `run: pwd && ls` to inspect runner state (use `run: cd your-solution-root-folder-name && ls` to confirm your suite was checked out).
 
 ## Minimal Workflow Example
 
@@ -115,7 +115,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
 
       - name: Print workflow context
         run: |
@@ -123,8 +128,13 @@ jobs:
           echo "Branch: $GITHUB_REF"
           echo "Commit: $GITHUB_SHA"
 
-      - name: Run validation
-        run: echo "Run lint, tests, or build here"
+      - name: Install dependencies
+        working-directory: your-solution-root-folder-name
+        run: pip install -r requirements.txt
+
+      - name: Run smoke suite
+        working-directory: your-solution-root-folder-name
+        run: behave --tags=smoke
 ```
 
 ### YAML Explanation
@@ -132,23 +142,24 @@ jobs:
 - `pull_request` runs checks before code is merged.
 - `branches: [main]` limits the trigger to pull requests targeting `main`.
 - `permissions: contents: read` applies least privilege.
-- `actions/checkout@v4` downloads the repository onto the runner.
+- `actions/checkout@v6` downloads the repository onto the runner.
+- `actions/setup-python@v6` with `python-version: "3.13"` provisions the interpreter the Behave/Selenium suite expects.
 - The context step prints safe runtime metadata.
-- The validation step is where real lint, test, or build commands go.
+- The validation step is where real Behave runs, `pylint`, or duplicate checks go.
 
 ### Expected Output
 
 - Workflow run appears on pull requests.
 - The job completes successfully.
-- Logs show repository, branch, and commit details.
+- Logs show repository, branch, and commit details, followed by the `behave --tags=smoke` scenario results.
 
 ## Labs
 
 | Difficulty | Task | Expected Output |
 | --- | --- | --- |
 | Beginner | Create a workflow that prints your name. | Successful workflow with one log line. |
-| Intermediate | Trigger the workflow on both `push` and `pull_request`. | Workflow runs for both events. |
-| Challenge | Add a manual `workflow_dispatch` trigger with an input called `environment`. | Manual run accepts an environment value. |
+| Intermediate | Trigger the workflow on both `push` and `pull_request`, set up Python 3.13, and run `behave --tags=smoke`. | Workflow runs for both events and executes the smoke suite. |
+| Challenge | Add a manual `workflow_dispatch` trigger with an input called `browser` (chrome/firefox/msedge). | Manual run accepts a browser value used by the Selenium suite. |
 
 ---
 

@@ -6,12 +6,12 @@
 ## Learning Objectives
 
 - Build scheduled and manual QA automation workflows.
-- Collect API, UI, and contract test evidence.
+- Collect API health, BDD UI, and reporting evidence.
 - Design pipelines that help QA triage failures quickly.
 
 ## Key Concepts
 
-smoke tests, regression suites, Selenium, Newman, Pact, evidence bundles
+smoke tests, regression suites, Selenium, Behave (Python BDD), Allure reports, requests API health-checks, evidence bundles
 
 ## Expected Outcome
 
@@ -20,22 +20,22 @@ You can operate QA automation workflows that produce reliable failure evidence.
 ## Concept Flow
 
 ```text
-Schedule / Manual Trigger -> API Tests + UI Tests + Contract Tests -> Evidence Artifacts -> QA Summary
+Schedule / Manual Trigger -> API Health-Check (requests) -> BDD UI Tests (behave + selenium, browser matrix) -> Allure Report Analysis -> Email with Metrics
 ```
 
 ---
 
 ## ELI5 Explanation
 
-QA workflows are automated test inspectors. They run API tests, browser tests, contract tests, and collect evidence like screenshots, videos, and reports.
+QA workflows are automated test inspectors. They ping the API to make sure it is awake, drive real browsers through your scenarios, and collect evidence like screenshots and Allure reports so failures are easy to read.
 
 ## Technical Explanation
 
-QA automation workflows orchestrate services, test data, browsers, API clients, test reports, artifacts, retries, and notifications. They can run on pull requests, nightly schedules, release branches, or manual triggers.
+QA automation workflows orchestrate test data, browsers, API clients, Allure reports, artifacts, retries, and notifications. They can run on pull requests, nightly schedules, release branches, or manual triggers. For these projects the nightly chain layers a Python `requests` API health-check, a `behave` + `selenium` UI suite across a browser matrix on a self-hosted runner, Allure report analysis, and an SMTP email summarizing pass-rate and failed IDs.
 
 ## Real-World Use Case
 
-Every night, the QA pipeline runs API regression tests, Selenium UI tests, and contract tests, then uploads reports and alerts the team if something fails.
+Every night the web automation smoke suite runs against `your-domain.com`: a `requests` health-check confirms the API is up, `behave` + `selenium` execute the BDD scenarios across chrome and firefox on a `server1` self-hosted runner, Allure results are analyzed for pass-rate and failed scenario IDs, and the team receives an email summary. A heavier desktop/UI regression suite follows the same shape on `server1..server4`.
 
 ## When To Use
 
@@ -53,14 +53,14 @@ Every night, the QA pipeline runs API regression tests, Selenium UI tests, and c
 ## Common Mistakes
 
 - Running UI tests without capturing screenshots.
-- Not uploading reports on failure.
+- Not uploading Allure results on failure.
 - Treating flaky tests as normal failures forever.
 - Running all tests at the same frequency.
 
 ## Debugging Tips
 
-- Use `if: always()` for artifact upload.
-- Capture browser screenshots and videos.
+- Use `if: always()` for Allure results and screenshot upload.
+- Capture browser screenshots on scenario failure (Behave `after_scenario` hook).
 - Separate smoke, regression, and nightly jobs.
 - Store test logs with timestamps.
 
@@ -76,14 +76,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run sample smoke test
-        run: echo "Run API or UI smoke tests here"
+        run: echo "Run requests API health-check or behave smoke tags here"
 ```
 
 ### YAML Explanation
 
 - Pull requests run a fast smoke test.
 - A single job keeps the first QA check simple.
-- Replace the sample command with your real smoke test command.
+- Replace the sample command with your real `behave` smoke command.
 
 ### Step-by-Step Execution
 
@@ -99,70 +99,139 @@ name: Nightly QA Automation
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+    - cron: "30 1 * * *"
   workflow_dispatch:
+    inputs:
+      tags:
+        description: "Behave tags filter (e.g. @smoke)"
+        type: string
+        default: "@smoke"
+      browser:
+        description: "Browser to run UI tests against"
+        type: choice
+        options:
+          - chrome
+          - firefox
+          - msedge
+        default: chrome
 
 permissions:
   contents: read
 
 jobs:
-  api-tests:
+  api-health-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tests
-        uses: actions/checkout@v4
-      - name: Run Newman API tests
-        run: |
-          mkdir -p reports/api
-          echo "newman run collection.json --reporters junit"
-          echo "<testsuite></testsuite>" > reports/api/newman.xml
-      - name: Upload API report
-        if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          name: api-test-report
-          path: reports/api/
+          python-version: "3.13"
+      - name: Cache pip
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('your-solution-root-folder-name/requirements.txt') }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests
+      - name: Run API health-check
+        run: |
+          python - <<'PY'
+          import requests, sys
+          r = requests.get("https://your-domain.com/health", timeout=30)
+          print("status:", r.status_code)
+          sys.exit(0 if r.ok else 1)
+          PY
 
   ui-tests:
-    runs-on: ubuntu-latest
+    needs: api-health-check
+    runs-on:
+      - self-hosted
+      - windows
+      - server1
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
     steps:
       - name: Checkout tests
-        uses: actions/checkout@v4
-      - name: Run Selenium tests
-        run: |
-          mkdir -p reports/ui screenshots
-          echo "Run Selenium tests here"
-          echo "sample screenshot evidence" > screenshots/home.txt
-      - name: Upload UI evidence
-        if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          name: ui-test-evidence
-          path: |
-            reports/ui/
-            screenshots/
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install behave selenium allure-behave webdriver-manager
+      - name: Run BDD UI tests
+        run: |
+          behave your-solution-root-folder-name/features `
+            --tags "${{ inputs.tags || '@smoke' }}" `
+            -D browser=${{ matrix.browser }} `
+            -f allure_behave.formatter:AllureFormatter `
+            -o reports/allure-results/${{ matrix.browser }}
+        shell: pwsh
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results-${{ matrix.browser }}
+          path: reports/allure-results/${{ matrix.browser }}
+      - name: Upload failure screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots-${{ matrix.browser }}
+          path: reports/screenshots/
 
-  contract-tests:
+  report-and-notify:
+    needs: ui-tests
+    if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout contracts
-        uses: actions/checkout@v4
-      - name: Run Pact contract tests
-        run: echo "Run pact verification here"
+      - name: Download Allure results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: allure-results-*
+          path: reports/allure-results
+          merge-multiple: true
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Analyze Allure report
+        run: |
+          python -m pip install allure-report-analyzer
+          allure-report-analyzer reports/allure-results --out reports/metrics.json
+      - name: Email QA summary
+        run: |
+          python your-solution-root-folder-name/scripts/send_report.py \
+            --metrics reports/metrics.json
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
 ```
 
 ### YAML Explanation
 
-- `schedule` runs the regression suite nightly.
-- `workflow_dispatch` lets QA rerun manually.
-- API, UI, and contract tests are separate jobs.
-- Artifacts preserve evidence for debugging and audit.
+- `schedule` runs the smoke suite nightly at 1:30 AM UTC.
+- `workflow_dispatch` inputs let QA rerun manually and pick the tags filter and browser.
+- API health-check, BDD UI tests, and reporting are separate, dependent jobs.
+- The browser matrix runs chrome and firefox in parallel on the `server1` self-hosted runner.
+- `if: always()` preserves Allure results and screenshots even when scenarios fail.
+- The final job analyzes Allure metrics and emails pass-rate / failed IDs over SMTP.
 
 ### Expected Output
 
-- Nightly workflow runs automatically.
-- API, UI, and contract tests are separated.
-- Reports and screenshots are uploaded as artifacts.
+- Nightly workflow runs automatically at 1:30 AM UTC.
+- API health-check gates the UI tests.
+- Allure results and screenshots are uploaded as artifacts.
+- An email summary with pass-rate and failed scenario IDs is sent.
 
 ## Self-Hosted Runner Execution Examples
 
@@ -180,9 +249,11 @@ on:
         description: "Runner label to use"
         type: choice
         options:
-          - qa-runner-1
-          - qa-runner-2
-        default: qa-runner-1
+          - server1
+          - server2
+          - server3
+          - server4
+        default: server1
 
 run-name: QA on ${{ inputs.runner }}
 
@@ -200,27 +271,28 @@ jobs:
           "Actual runner name: $env:RUNNER_NAME"
 ```
 
-You cannot rename a runner from workflow YAML. Set the runner name when registering the self-hosted runner, then target it with a stable label.
+You cannot rename a runner from workflow YAML. Set the runner name when registering the self-hosted runner, then target it with a stable label such as `server1`.
 
 ### Run a Windows Executable
 
 ```yaml
 jobs:
-  desktop-check:
+  regression-check:
     runs-on:
       - self-hosted
       - windows
-      - qa-runner-1
+      - server1
     steps:
-      - name: Run installed desktop checker
+      - name: Run TestExecute regression batch
         shell: pwsh
         run: |
-          & "C:\Tools\desktop-checker\desktop-checker.exe" `
-            --config ".\config\qa.json" `
-            --output ".\reports\desktop-check.json"
+          & "C:\Tools\TestExecute\TestExecute.exe" `
+            ".\your-solution-root-folder-name\Regression.pjs" `
+            /run /tags:smoke `
+            /exportLog:".\reports\regression.mht"
 ```
 
-Quote executable paths that contain spaces and let PowerShell's call operator `&` execute the file.
+Quote executable paths that contain spaces and let PowerShell's call operator `&` execute the file. This mirrors a typical desktop/UI regression flow driven by an executable test runner and batch files.
 
 ### Install and Run a Pip Package With Parameters
 
@@ -230,21 +302,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install package command
         run: |
           python -m pip install --upgrade pip
-          python -m pip install generic-report-cli
+          python -m pip install allure-report-analyzer
 
       - name: Run package command with parameters
         run: |
-          generic-report \
+          allure-report-analyzer \
             --suite regression \
             --browser chrome \
-            --output reports/generic-report.json
+            --out reports/metrics.json
 ```
 
 Pin package versions for production workflows when reproducibility matters.
@@ -254,8 +326,8 @@ Pin package versions for production workflows when reproducibility matters.
 | Difficulty | Task | Expected Output |
 | --- | --- | --- |
 | Beginner | Add a smoke test workflow. | Smoke test runs on PR. |
-| Intermediate | Upload QA reports as artifacts. | Reports are available after failure or success. |
-| Challenge | Create nightly API + UI + contract test jobs. | Scheduled QA workflow runs daily. |
+| Intermediate | Upload Allure results and screenshots as artifacts. | Evidence is available after failure or success. |
+| Challenge | Create a nightly API health-check + BDD UI (browser matrix) + Allure report + email chain. | Scheduled QA workflow runs daily at 1:30 AM UTC. |
 
 ---
 

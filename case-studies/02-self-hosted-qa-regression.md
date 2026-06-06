@@ -77,7 +77,7 @@ jobs:
     timeout-minutes: 240
     steps:
       - name: Checkout tests
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run selected suite
         shell: pwsh
@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qa-report
           path: reports/**
@@ -138,7 +138,7 @@ jobs:
       API_TOKEN: ${{ secrets.API_TOKEN }}
     steps:
       - name: Checkout tests
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare runner
         shell: pwsh
@@ -181,7 +181,7 @@ jobs:
 
       - name: Upload QA evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: qa-evidence-${{ github.run_number }}
           path: reports/**

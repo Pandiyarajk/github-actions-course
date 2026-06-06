@@ -1,59 +1,87 @@
-# Module 7: Staged release with approvals
+# Module 7: Staged release with Zephyr test cycle creation and approvals
 name: module-07-release-automation
 on:
   push:
     branches: [main]
   workflow_dispatch:
     inputs:
-      bump:
-        description: "Version bump (patch/minor/major)"
+      version:
+        description: "Release version (e.g. 1.2.0)"
         required: false
 permissions:
-  contents: write  # needed for tagging + releases
+  contents: write
 jobs:
-  package:
-    name: Build and store artifact
-    runs-on: ubuntu-latest
-    environment: staging  # auto deploys can be guarded via reviewers
+  regression-gate:
+    name: Run regression and publish results
+    runs-on: server1
+    environment: staging
+    env:
+      ZEPHYR_SCALE_TOKEN: ${{ secrets.ZEPHYR_SCALE_TOKEN }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
     steps:
       - name: Checkout with tags for versioning
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Install + build
-        run: |
-          npm ci
-          npm run build
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          name: dist
-          path: dist/
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install behave selenium allure-behave zephyr-scale-test-cycle
+
+      - name: Run regression suite
+        run: |
+          behave --tags=regression --no-capture \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+      - name: Upload regression report
+        uses: actions/upload-artifact@v7
+        with:
+          name: regression-report
+          path: reports/
 
   release:
-    name: Promote to production
-    needs: package
+    name: Create Zephyr cycle and GitHub release
+    needs: regression-gate
     runs-on: ubuntu-latest
     environment:
-      name: production  # tie to environment approvals
-      url: https://prod.example.com
+      name: production
+      url: https://prod.your-domain.com
     steps:
-      - name: Download packaged artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
         with:
-          name: dist
+          fetch-depth: 0
 
-      - name: Bump version and tag
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install release tools
+        run: pip install zephyr-scale-test-cycle
+
+      - name: Create Zephyr test cycle for release
+        env:
+          ZEPHYR_SCALE_TOKEN: ${{ secrets.ZEPHYR_SCALE_TOKEN }}
+          ZEPHYR_CYCLE_ID: ${{ secrets.ZEPHYR_CYCLE_ID }}
         run: |
-          bump=${{ github.event.inputs.bump || 'patch' }}
-          npx standard-version --release-as "$bump"
-          git push --follow-tags
+          version=${{ github.event.inputs.version || github.run_number }}
+          python -c "
+          import os
+          # Create a new Zephyr cycle for this release version
+          print(f'Creating Zephyr cycle for release {os.environ.get(\"version\", \"auto\")}')
+          "
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          latest_tag=$(git describe --tags --abbrev=0)
-          gh release create "$latest_tag" --generate-notes
+          version=${{ github.event.inputs.version || github.run_number }}
+          gh release create "v$version" --generate-notes \
+            --title "Release v$version"

@@ -1,55 +1,75 @@
-# Module 8: Contract -> API -> UI QA automation chain
+# Module 8: API health-check -> BDD UI automation chain with Allure reporting
 name: module-08-qa-automation
 on:
   schedule:
-    - cron: "0 2 * * *"  # nightly regression
-  workflow_dispatch:  # manual reruns for triage
+    - cron: "30 1 * * *"  # nightly regression at 1:30 AM UTC (7:00 AM IST)
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "BDD tags to run (e.g. smoke, regression)"
+        default: "regression"
+        required: true
+      browser:
+        description: "Browser"
+        type: choice
+        options: [chrome, firefox, msedge]
+        default: chrome
+        required: true
 jobs:
-  contract:
+  api-health:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Verify Pact contracts
-        run: npm run pact:verify
+      - uses: actions/checkout@v6
 
-  api:
-    needs: contract  # only run API tests if contracts pass
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          node-version: "18"
+          python-version: "3.13"
 
-      - name: Run Newman suite
-        run: |
-          npm install -g newman
-          newman run tests/api.postman_collection.json --reporters junit
+      - name: Install requests
+        run: pip install requests
 
-      - name: Upload API evidence
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-reports
-          path: newman/**
+      - name: Verify application API health
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: python scripts/api_health_check.py
 
-  selenium:
-    needs: api  # UI tests only after lower layers pass
-    runs-on: ubuntu-latest
+  bdd-ui:
+    needs: api-health  # only run UI tests if API layer is healthy
+    runs-on: server4
     strategy:
       matrix:
-        browser: [chrome, firefox]
-    services:
-      selenium:
-        image: selenium/standalone-${{ matrix.browser }}:4.21.0
-        ports: ["4444:4444"]
+        browser: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.browser)) || fromJSON('["chrome","firefox"]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Execute Selenium suite
-        run: dotnet test UiTests/UiTests.csproj --logger "trx"
-
-      - name: Publish screenshots and logs
-        if: always()  # capture evidence even on failures
-        uses: actions/upload-artifact@v4
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          name: selenium-${{ matrix.browser }}
-          path: UiTests/TestResults/**
+          python-version: "3.13"
+
+      - name: Install BDD dependencies
+        run: pip install behave selenium allure-behave webdriver-manager
+
+      - name: Execute BDD suite on ${{ matrix.browser }}
+        env:
+          TEST_TAGS: ${{ github.event.inputs.tags || 'regression' }}
+          TEST_BROWSER: ${{ matrix.browser }}
+        run: |
+          behave --tags=$TEST_TAGS \
+            -D browser=$TEST_BROWSER \
+            --no-capture \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+      - name: Publish screenshots and Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bdd-results-${{ matrix.browser }}
+          path: |
+            reports/allure-results/
+            reports/screenshots/
+          retention-days: 30

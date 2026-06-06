@@ -1,26 +1,33 @@
-# Module 1: CI/CD foundations with fast feedback
+# Module 1: CI/CD foundations with fast feedback — Python BDD automation project
 name: module-01-ci-foundations
 on:
   push:
     branches:
-      - main  # keep demo noise low
-  workflow_dispatch:  # allow manual reruns during class
+      - main
+  workflow_dispatch:
 jobs:
   sanity:
-    name: Quick lint + unit tests
+    name: Quick lint + smoke tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository  # Always begin by syncing sources
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint behave selenium allure-behave
 
       - name: Run smoke tests
-        run: npm test -- --runInBand
+        run: behave --tags=smoke --no-capture
 
-      - name: Publish coverage artifact  # Shows how QA can grab evidence
-        uses: actions/upload-artifact@v4
+      - name: Publish test evidence artifact
+        uses: actions/upload-artifact@v7
         with:
-          name: coverage
-          path: coverage/
+          name: smoke-test-results
+          path: reports/

@@ -1,33 +1,50 @@
-# Module 4: Matrix fan-out plus reusable workflow call
+# Module 4: Matrix fan-out across browsers — Selenium BDD automation
 name: module-04-matrix-and-reuse
 on:
   pull_request:
+  workflow_dispatch:
 jobs:
-  matrix-tests:
+  bdd-matrix:
     strategy:
-      fail-fast: false  # keep collecting data even if one combo fails
+      fail-fast: false  # keep collecting data even if one browser fails
       matrix:
-        node: [16, 18]
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+        browser: [chrome, firefox, msedge]
+        server: [server1, server2]
+    runs-on: ${{ matrix.server }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup Node ${{ matrix.node }}
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          node-version: ${{ matrix.node }}
+          python-version: "3.13"
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          pip install behave selenium allure-behave webdriver-manager
 
-      - name: Run tests on ${{ matrix.os }}
-        run: npm test
+      - name: Run BDD suite on ${{ matrix.browser }}
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: |
+          behave --tags=regression \
+            -D browser=${{ matrix.browser }} \
+            --no-capture \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
 
-  reusable-smoke:
-    needs: matrix-tests
-    uses: acme-org/github-actions-templates/.github/workflows/reusable-smoke.yml@main
-    secrets: inherit  # forward secrets so the reusable workflow can deploy
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-${{ matrix.browser }}-${{ matrix.server }}
+          path: reports/allure-results/
+          retention-days: 30
+
+  reusable-report:
+    needs: bdd-matrix
+    uses: ./.github/workflows/generate-allure-report.yml
+    secrets: inherit
     with:
-      environment: staging  # demonstrates workflow_call inputs
+      environment: staging

@@ -5,22 +5,22 @@
 
 ## Learning Objectives
 
-- Design fast pull request test pipelines.
-- Separate unit, integration, API, UI, and contract tests.
-- Publish test evidence with artifacts.
+- Design fast pull request test pipelines for Python automation.
+- Separate static analysis, API, BDD smoke, and UI test layers.
+- Publish test evidence with Allure and JUnit-style artifacts.
 
 ## Key Concepts
 
-test stages, reports, artifacts, fail-fast feedback, flaky tests
+test layers, Allure reports, artifacts, fail-fast feedback, flaky tests
 
 ## Expected Outcome
 
-You can build test pipelines that give developers and QA useful feedback.
+You can build Python test pipelines that give developers and QA useful feedback.
 
 ## Concept Flow
 
 ```text
-Pull Request -> Install Dependencies -> Unit Tests -> Integration / API Tests -> Reports -> PR Status
+Pull Request -> Install Dependencies -> Static Analysis (pylint) -> API Tests (behave @api) -> BDD Smoke (behave @smoke) -> Allure Report -> PR Status
 ```
 
 ---
@@ -31,17 +31,17 @@ Automated tests are quality gates. GitHub Actions runs them every time code chan
 
 ## Technical Explanation
 
-Testing workflows install dependencies, run test commands, publish reports, upload artifacts, and fail the pipeline when tests fail. Teams often separate unit, integration, API, UI, and contract tests into different jobs with different triggers.
+Testing workflows install Python dependencies, run test commands, publish reports, upload artifacts, and fail the pipeline when tests fail. Instead of splitting by language, a Python automation project splits by LAYER: static analysis (pylint, duplicate checks), API tests (Behave with `@api` tags), BDD smoke (Behave with `@smoke` tags), and Selenium UI tests, all reporting through Allure (`allure-behave`).
 
 ## Real-World Use Case
 
-A pull request should not merge unless backend unit tests, frontend tests, and API tests pass.
+A pull request should not merge unless pylint passes, API behave scenarios pass, and the Selenium BDD smoke suite passes across chrome, firefox, and msedge.
 
 ## When To Use
 
 - You want fast feedback on every pull request.
-- You need regression protection.
-- You want QA evidence stored as artifacts.
+- You need regression protection for your Behave/Selenium suites.
+- You want QA evidence stored as Allure artifacts.
 
 ## When NOT To Use
 
@@ -51,17 +51,17 @@ A pull request should not merge unless backend unit tests, frontend tests, and A
 
 ## Common Mistakes
 
-- Running tests without installing dependencies.
-- Not uploading reports when tests fail.
-- Combining all tests into one huge job.
-- Ignoring flaky tests instead of tracking them.
+- Running behave without installing dependencies.
+- Not uploading Allure results when tests fail.
+- Combining all test layers into one huge job.
+- Ignoring flaky Selenium tests instead of tracking them.
 
 ## Debugging Tips
 
-- Upload test reports with `if: always()`.
-- Separate fast and slow tests.
-- Capture screenshots or logs for UI tests.
-- Use clear job names for test categories.
+- Upload Allure results and behave output with `if: always()`.
+- Separate fast static checks from slow UI tests.
+- Capture Selenium screenshots or logs for failing UI scenarios.
+- Use clear job names for each test layer.
 
 ## Minimal Workflow Example
 
@@ -75,22 +75,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
       - name: Run sample tests
-        run: echo "Use pytest, npm test, dotnet test, or your project test command"
+        run: echo "Use behave, pytest, or your project test command"
 ```
 
 ### YAML Explanation
 
 - `pull_request` gives feedback before merge.
 - `checkout` gets the code.
-- The test step should be replaced with the project's real command.
+- The test step should be replaced with the project's real behave command.
 
 ### Step-by-Step Execution
 
 1. Pull request opens or updates.
 2. Workflow checks out the repository.
-3. Test command runs.
+3. Behave test command runs.
 4. Pull request shows pass or fail status.
 
 ## Production Workflow Example
@@ -107,75 +111,94 @@ permissions:
   contents: read
 
 jobs:
-  python-tests:
+  static-analysis:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
-      - name: Run pytest
-        run: pytest --junitxml=reports/pytest.xml
-      - name: Upload pytest report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pytest-report
-          path: reports/pytest.xml
-
-  node-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
       - name: Install dependencies
-        run: npm ci
-      - name: Run JavaScript tests
-        run: npm test
+        run: pip install -r your-solution-root-folder-name/requirements.txt
+      - name: Run pylint
+        run: pylint your-solution-root-folder-name/
+      - name: Check duplicate functions
+        run: python your-solution-root-folder-name/scripts/check-duplicate-functions.py
+      - name: Check duplicate variables
+        run: python your-solution-root-folder-name/scripts/check-duplicate-variables.py
 
-  dotnet-tests:
+  api-tests:
     runs-on: ubuntu-latest
+    needs: static-analysis
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
         with:
-          dotnet-version: "8.0.x"
-      - name: Run .NET tests
-        run: dotnet test --logger trx
+          python-version: "3.13"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r your-solution-root-folder-name/requirements.txt
+      - name: Run API behave scenarios
+        run: behave your-solution-root-folder-name/features --tags=@api -f allure_behave.formatter:AllureFormatter -o reports/allure-results --junit
+      - name: Upload API reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: api-reports
+          path: reports/
+
+  bdd-smoke:
+    runs-on: ubuntu-latest
+    needs: static-analysis
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, msedge]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r your-solution-root-folder-name/requirements.txt
+      - name: Run Selenium BDD smoke (${{ matrix.browser }})
+        run: behave your-solution-root-folder-name/features --tags=@smoke -D browser=${{ matrix.browser }} -f allure_behave.formatter:AllureFormatter -o reports/allure-results --junit
+      - name: Upload smoke reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-reports-${{ matrix.browser }}
+          path: reports/
 ```
 
 ### YAML Explanation
 
-- Each language gets its own job for clearer failures.
-- Setup actions install the required toolchain.
-- Caching speeds up dependency installation.
-- `if: always()` preserves test reports even when tests fail.
+- Each test LAYER gets its own job for clearer failures, all Python/Behave.
+- `actions/setup-python@v6` with `cache: pip` installs and caches the toolchain.
+- The `bdd-smoke` matrix fans out the Selenium suite across chrome, firefox, and msedge.
+- `if: always()` preserves Allure and JUnit reports even when tests fail.
 
 ### Expected Output
 
-- Separate jobs for Python, Node, and .NET.
-- Test reports upload even when tests fail.
-- Pull request clearly shows which stack failed.
+- Separate jobs for static analysis, API tests, and BDD smoke.
+- Allure and JUnit reports upload even when tests fail.
+- Pull request clearly shows which layer or browser failed.
 
 ## Labs
 
 | Difficulty | Task | Expected Output |
 | --- | --- | --- |
-| Beginner | Add a workflow that runs one test command. | Test job appears on pull requests. |
-| Intermediate | Upload a test report artifact. | Artifact is available after workflow run. |
-| Challenge | Split unit, integration, and API tests into separate jobs. | Each test type has its own check. |
+| Beginner | Add a workflow that runs one behave command. | Test job appears on pull requests. |
+| Intermediate | Upload an Allure results artifact. | Artifact is available after workflow run. |
+| Challenge | Split static analysis, API, and BDD smoke into separate jobs with a browser matrix. | Each test layer has its own check. |
 
 ---
 

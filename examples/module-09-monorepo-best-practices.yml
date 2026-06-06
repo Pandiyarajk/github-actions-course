@@ -1,54 +1,77 @@
-# Module 9: Monorepo-aware workflow with selective triggers
+# Module 9: Path-filtered workflow — only run tests for changed BDD feature areas
 name: module-09-monorepo-best-practices
 on:
   pull_request:
     paths:
-      - "services/**"
-      - "qa/**"
+      - "your-solution-root-folder-name/**"
+      - "features/**"
+      - "steps/**"
       - ".github/workflows/**"
   workflow_dispatch:
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      api: ${{ steps.filter.outputs.api }}
-      web: ${{ steps.filter.outputs.web }}
-      qa: ${{ steps.filter.outputs.qa }}
+      pageobjects: ${{ steps.filter.outputs.pageobjects }}
+      features: ${{ steps.filter.outputs.features }}
+      scripts: ${{ steps.filter.outputs.scripts }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Map paths to services
+      - uses: actions/checkout@v6
+      - name: Map paths to test areas
         id: filter
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            api:
-              - 'services/api/**'
-            web:
-              - 'services/web/**'
-            qa:
-              - 'qa/**'
+            pageobjects:
+              - 'your-solution-root-folder-name/pageobjects/**'
+            features:
+              - 'features/**'
+              - 'steps/**'
+            scripts:
+              - '.github/scripts/**'
 
-  api-tests:
+  static-checks:
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.api == 'true' }}  # skip if API untouched
+    if: ${{ needs.detect-changes.outputs.pageobjects == 'true' || needs.detect-changes.outputs.features == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: pytest services/api/tests
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install analysis tools
+        run: pip install pylint check-duplicate-functions check-duplicate-variables
+      - name: Check for duplicate pageobject locators
+        run: check-duplicate-variables your-solution-root-folder-name/pageobjects/
+      - name: Lint Python files
+        run: pylint your-solution-root-folder-name/ --exit-zero
 
-  web-tests:
+  bdd-smoke:
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.web == 'true' }}
+    if: ${{ needs.detect-changes.outputs.features == 'true' }}
+    runs-on: server4
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install BDD tools
+        run: pip install behave selenium allure-behave
+      - name: Run smoke suite for changed features
+        run: |
+          behave --tags=smoke --no-capture \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+  script-lint:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.scripts == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: npm --prefix services/web ci && npm --prefix services/web test
-
-  qa-lint:
-    needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.qa == 'true' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Lint shared QA assets
-        run: npm --prefix qa lint
+      - uses: actions/checkout@v6
+      - name: Lint shared automation scripts
+        run: |
+          pip install pylint
+          pylint .github/scripts/ --exit-zero

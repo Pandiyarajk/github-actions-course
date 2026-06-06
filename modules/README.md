@@ -2,6 +2,13 @@
 
 Use this directory as the main study path. Each module is self-contained and includes objectives, ELI5 and technical explanations, real-world use cases, when to use and avoid the pattern, common mistakes, debugging tips, minimal YAML, production YAML, execution flow, labs, and expected outputs.
 
+All examples are oriented around **Python test automation** as used in real-world projects:
+
+- **Web automation suite** — Selenium + Behave (Python BDD) web automation with Allure reporting, multi-browser (chrome/firefox/msedge), daily scheduled smoke tests, and SMTP email notifications.
+- **Desktop/UI regression suite** — Windows-based regression automation on self-hosted runners (`server1`–`server4`), Python report generation, Zephyr Scale + Jira integration, and SMTP email reports.
+
+Conventions used throughout: Python 3.13, Behave, Selenium, Allure, `pylint`, self-hosted runner labels `server1`–`server4`, and the generic placeholders `your-solution-root-folder-name/` and `your-domain.com`.
+
 ## Recommended Path
 
 ```text
@@ -26,19 +33,19 @@ Capstones:    Apply everything in realistic delivery scenarios
 
 | Requirement | Study Focus |
 | --- | --- |
-| Learning objectives | Build matrix jobs, reusable workflows, automated test pipelines, Docker builds, cached workflows, and releases. |
-| Key concepts | Matrix strategy, reusable workflow, composite action, test report, Docker image, cache key, environment, release tag. |
-| Hands-on exercises | Run version matrices, upload test reports, cache dependencies, publish a Docker image, create deployment tags. |
-| Expected outcomes | Learners can design practical team CI/CD workflows with clear feedback and repeatable outputs. |
+| Learning objectives | Build browser/server matrix jobs, reusable workflows, multi-layer Python test pipelines, Selenium Grid via Docker, cached workflows, and Zephyr release cycles. |
+| Key concepts | Matrix strategy, reusable workflow, composite action, Allure report, Selenium Grid, pip cache key, environment, Zephyr test cycle. |
+| Hands-on exercises | Run browser matrices, upload Allure reports, cache pip dependencies, run Behave against a Selenium Grid, create Zephyr release cycles. |
+| Expected outcomes | Learners can design practical team test-automation workflows with clear feedback and repeatable outputs. |
 
 ### Advanced: Modules 8-10
 
 | Requirement | Study Focus |
 | --- | --- |
-| Learning objectives | Operate QA automation, monorepos, self-hosted runners, notifications, debugging workflows, and governance controls. |
-| Key concepts | QA evidence, path filtering, runner labels, OIDC, least privilege, summaries, alerts, concurrency, timeout. |
-| Hands-on exercises | Build nightly QA workflows, target self-hosted runners safely, write summaries, add failure notifications, harden permissions. |
-| Expected outcomes | Learners can support production-grade automation with security, observability, and maintainability. |
+| Learning objectives | Operate nightly QA automation, monorepo path filtering, self-hosted runners, SMTP notifications, debugging workflows, and governance controls. |
+| Key concepts | Allure evidence, path filtering, runner labels (`server1`–`server4`), least privilege, step summaries, SMTP alerts, concurrency, timeout. |
+| Hands-on exercises | Build nightly Behave/Selenium QA workflows, target self-hosted runners safely, write step summaries, add SMTP failure notifications, harden permissions. |
+| Expected outcomes | Learners can support production-grade test automation with security, observability, and maintainability. |
 
 ## Module Index
 

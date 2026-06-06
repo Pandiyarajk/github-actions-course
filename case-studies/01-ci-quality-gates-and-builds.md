@@ -45,9 +45,9 @@ Pull Request Trigger
    v
 Detect Changed Files
    |
-   +--> Python Formatting / Lint
+   +--> Python Lint (pylint)
+   +--> Duplicate-Function Check
    +--> JSON Validation
-   +--> Script Checks
    |
    v
 Optional Manual Build
@@ -72,21 +72,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install tools
-        run: pip install black flake8
-
-      - name: Check formatting
-        run: black --check .
+        run: pip install pylint check-duplicate-functions
 
       - name: Run lint
-        run: flake8 .
+        run: pylint your-solution-root-folder-name/ --exit-zero
+
+      - name: Check for duplicate functions
+        run: check-duplicate-functions your-solution-root-folder-name/
 ```
 
 ## 7. Production Version YAML
@@ -114,18 +114,18 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
 
       - name: Install quality tools
-        run: pip install black flake8 pylint detect-secrets
+        run: pip install pylint check-duplicate-functions check-duplicate-variables check-json-format
 
       - name: Determine changed files
         id: changes
@@ -135,28 +135,30 @@ jobs:
           git diff --name-only main...HEAD > changed-files.txt
           cat changed-files.txt
 
-      - name: Run Python formatting
-        if: hashFiles('**/*.py') != ''
-        run: black --check .
-
       - name: Run Python lint
         if: hashFiles('**/*.py') != ''
-        run: flake8 .
+        run: pylint your-solution-root-folder-name/ --exit-zero
+
+      - name: Check for duplicate functions
+        if: hashFiles('**/*.py') != ''
+        run: check-duplicate-functions your-solution-root-folder-name/
 
       - name: Validate JSON files
         shell: bash
         run: |
           files=$(grep -E '\.json$' changed-files.txt || true)
           for file in $files; do
-            python -m json.tool "$file" > /dev/null
+            check-json-format "$file"
           done
 
       - name: Scan for committed secrets
-        run: detect-secrets scan --all-files
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
 
       - name: Upload quality evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: quality-evidence
           path: changed-files.txt
@@ -167,12 +169,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
 
       - name: Install build tool
@@ -184,7 +186,7 @@ jobs:
           pyinstaller --onefile tools/sample-tool/main.py --name sample-tool --distpath dist/sample-tool
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sample-tool-${{ github.run_number }}
           path: dist/sample-tool/**
@@ -224,7 +226,7 @@ jobs:
 
 | Difficulty | Task | Expected Output |
 | --- | --- | --- |
-| Beginner | Add Black and flake8 to a PR workflow. | PR check fails when formatting or linting fails. |
+| Beginner | Add pylint and a duplicate-function check to a PR workflow. | PR check reports lint and duplicate-function issues. |
 | Intermediate | Validate only changed JSON files. | JSON validation runs only when JSON files changed. |
 | Challenge | Add a manual Windows artifact build. | Manual run uploads a named artifact. |
 

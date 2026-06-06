@@ -35,7 +35,7 @@ GitHub Actions YAML supports triggers, jobs, steps, contexts, expressions, envir
 
 ## Real-World Use Case
 
-A team wants linting and testing to run in separate jobs, with deployment allowed only if both pass.
+The web automation team wants pylint static analysis and the Behave smoke suite to run in separate jobs, with the Allure report publish step allowed only if both pass.
 
 ## When To Use
 
@@ -72,29 +72,29 @@ name: Syntax Basics
 on:
   workflow_dispatch:
     inputs:
-      name:
-        description: "Name to print"
+      browser:
+        description: "Browser to run the smoke suite on"
         required: true
-        default: "developer"
+        default: "chrome"
 
 jobs:
   greet:
     runs-on: ubuntu-latest
     steps:
       - name: Use workflow input
-        run: echo "Hello ${{ inputs.name }}"
+        run: echo "Running Selenium smoke tests on ${{ inputs.browser }}"
 ```
 
 ### YAML Explanation
 
 - `workflow_dispatch` enables manual runs.
 - `inputs` defines values the user provides at runtime.
-- `${{ inputs.name }}` reads the input before the step runs.
+- `${{ inputs.browser }}` reads the input before the step runs.
 
 ### Step-by-Step Execution
 
 1. User manually starts the workflow.
-2. GitHub asks for the `name` input.
+2. GitHub asks for the `browser` input.
 3. Runner starts.
 4. The step prints the provided input.
 
@@ -116,17 +116,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Run lint
-        run: echo "Replace with npm run lint, flake8, or dotnet format"
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Run static analysis
+        run: |
+          pylint your-solution-root-folder-name/
+          python your-solution-root-folder-name/scripts/check-duplicate-functions.py
+          python your-solution-root-folder-name/scripts/check-duplicate-variables.py
 
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Run tests
-        run: echo "Replace with your test command"
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Run Behave smoke suite
+        run: behave --tags=smoke your-solution-root-folder-name/features
 
   summary:
     needs:
@@ -136,7 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Print success summary
-        run: echo "Lint and tests passed for ${{ github.sha }}"
+        run: echo "Lint and smoke tests passed for ${{ github.sha }}"
 ```
 
 ### YAML Explanation
@@ -162,8 +173,8 @@ Use these snippets as small building blocks. GitHub evaluates cron schedules in 
 on:
   schedule:
     - cron: "0 * * * *"      # hourly, at minute 0
-    - cron: "0 2 * * *"      # daily, 02:00 UTC
-    - cron: "0 2 * * 1"      # weekly, Monday 02:00 UTC
+    - cron: "0 2 * * *"      # daily smoke run, 02:00 UTC
+    - cron: "0 2 * * 1"      # weekly regression, Monday 02:00 UTC
     - cron: "0 2 1 * *"      # monthly, first day at 02:00 UTC
   workflow_dispatch:
 ```
@@ -215,13 +226,13 @@ Use `github.event.ref_type == 'branch'` when a workflow should ignore tag creati
 on:
   pull_request:
     paths:
-      - "services/api/**"
-      - ".github/workflows/api-ci.yml"
+      - "your-solution-root-folder-name/features/**"
+      - ".github/workflows/web-smoke.yml"
   push:
     branches:
       - main
     paths:
-      - "services/api/**"
+      - "your-solution-root-folder-name/features/**"
 ```
 
 Path filters are useful for monorepos, but remember that skipped workflows can affect required checks if branch protection expects them.
@@ -247,7 +258,7 @@ jobs:
       - name: Add workflow summary
         if: always()
         run: |
-          echo "## Workflow Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Behave Smoke Summary" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Repository: ${{ github.repository }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Branch: ${{ github.ref_name }}" >> "$GITHUB_STEP_SUMMARY"
@@ -262,7 +273,7 @@ The summary supports Markdown, so tables, bullet lists, links, and short report 
 | --- | --- | --- |
 | Beginner | Add a second step that prints `github.actor`. | Logs show the triggering user. |
 | Intermediate | Create two jobs where one depends on the other. | Second job waits for first job. |
-| Challenge | Add an `if:` condition so a step runs only on `main`. | Conditional step is skipped on other branches. |
+| Challenge | Add an `if:` condition so the Allure publish step runs only on `main`. | Conditional step is skipped on other branches. |
 
 ---
 

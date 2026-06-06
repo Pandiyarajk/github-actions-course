@@ -112,7 +112,7 @@ jobs:
 
       - name: Checkout repository
         if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -138,7 +138,7 @@ jobs:
 
       - name: Upload lifecycle evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lifecycle-evidence
           path: |
@@ -167,17 +167,17 @@ Comparison and changed-file workflows often need more Git history than the defau
 ```yaml
 steps:
   - name: Fast checkout for current commit only
-    uses: actions/checkout@v4
+    uses: actions/checkout@v6
     with:
       fetch-depth: 1
 
   - name: Checkout enough history for HEAD~1 comparisons
-    uses: actions/checkout@v4
+    uses: actions/checkout@v6
     with:
       fetch-depth: 2
 
   - name: Checkout full history for branch or tag comparisons
-    uses: actions/checkout@v4
+    uses: actions/checkout@v6
     with:
       fetch-depth: 0
 ```
@@ -215,7 +215,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout full repository history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -243,13 +243,13 @@ The full checkout lets the script compare refs reliably even when the base and t
 ```yaml
 steps:
   - name: Checkout pull request source branch
-    uses: actions/checkout@v4
+    uses: actions/checkout@v6
     with:
       ref: ${{ github.head_ref }}
       fetch-depth: 0
 
   - name: Checkout manually selected ref
-    uses: actions/checkout@v4
+    uses: actions/checkout@v6
     with:
       ref: ${{ inputs.target_ref }}
       fetch-depth: 0
@@ -331,7 +331,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -457,7 +457,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Run folder-specific checks
         run: echo "Run checks for apps/web"
 ```

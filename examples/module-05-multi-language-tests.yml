@@ -1,4 +1,4 @@
-# Module 5: Multi-language quality portal
+# Module 5: Multi-layer test quality portal — Python BDD + static analysis + API
 name: module-05-multi-language-tests
 on:
   push:
@@ -10,57 +10,48 @@ jobs:
     strategy:
       matrix:
         include:
-          - language: python
-            version: "3.11"
-          - language: node
-            version: "18"
-          - language: dotnet
-            version: "8.0.x"
+          - layer: static-analysis
+            tags: ""
+          - layer: api-tests
+            tags: "api"
+          - layer: bdd-smoke
+            tags: "smoke"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup Python toolchain
-        if: ${{ matrix.language == 'python' }}
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.version }}
+          python-version: "3.13"
 
-      - name: Setup Node toolchain
-        if: ${{ matrix.language == 'node' }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.version }}
-
-      - name: Setup .NET toolchain
-        if: ${{ matrix.language == 'dotnet' }}
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ matrix.version }}
-
-      - name: Python tests
-        if: ${{ matrix.language == 'python' }}
+      - name: Install dependencies for ${{ matrix.layer }}
         run: |
-          pip install -r requirements.txt
-          pytest --junitxml=reports/python.xml --cov=app --cov-fail-under=80
+          pip install pylint behave selenium allure-behave requests
 
-      - name: Node tests
-        if: ${{ matrix.language == 'node' }}
+      - name: Static analysis
+        if: ${{ matrix.layer == 'static-analysis' }}
         run: |
-          npm ci
-          npm run lint
-          npm test -- --coverage
+          pip install check-duplicate-functions check-duplicate-variables
+          pylint your-solution-root-folder-name/ --exit-zero
+          check-duplicate-functions your-solution-root-folder-name/
 
-      - name: .NET tests
-        if: ${{ matrix.language == 'dotnet' }}
+      - name: API health-check tests
+        if: ${{ matrix.layer == 'api-tests' }}
         run: |
-          dotnet restore
-          dotnet test tests/UiTests.csproj --logger "trx;LogFileName=results.trx"
+          behave --tags=${{ matrix.tags }} --no-capture \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+      - name: BDD smoke suite
+        if: ${{ matrix.layer == 'bdd-smoke' }}
+        run: |
+          behave --tags=${{ matrix.tags }} --no-capture \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
 
       - name: Publish evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: test-${{ matrix.language }}
-          path: |
-            reports/**
-            tests/TestResults/**
+          name: results-${{ matrix.layer }}
+          path: reports/

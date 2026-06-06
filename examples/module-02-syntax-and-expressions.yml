@@ -1,28 +1,37 @@
-# Module 2: Job relationships, expressions, and outputs
+# Module 2: Job relationships, expressions, and outputs — Python BDD pipeline
 name: module-02-syntax-and-expressions
 on:
   pull_request:
-    types: [opened, synchronize]  # keep runs focused on code changes
+    types: [opened, synchronize]
 jobs:
-  build:
+  static-checks:
     runs-on: ubuntu-latest
     outputs:
-      bundle-id: ${{ steps.meta.outputs.bundle-id }}  # expose data to downstream jobs
+      run-id: ${{ steps.meta.outputs.run-id }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - name: Stamp bundle metadata
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Stamp run metadata
         id: meta
-        run: echo "bundle-id=web-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+        run: echo "run-id=bdd-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
 
-      - name: Build app
-        run: npm run build
+      - name: Install static analysis tools
+        run: |
+          pip install pylint check-duplicate-functions
 
-  smoke:
-    needs: build  # ensures bundle assets exist
+      - name: Run pylint on changed Python files
+        run: pylint your-solution-root-folder-name/ --exit-zero
+
+  behave-smoke:
+    needs: static-checks  # only run BDD smoke if static checks pass
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'docs-only') }}  # skip low-signal PRs
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'docs-only') }}
     steps:
-      - name: Announce release under test
-        run: echo "Testing bundle ${{ needs.build.outputs.bundle-id }}"
+      - name: Announce test run
+        run: echo "Running BDD smoke suite for run ${{ needs.static-checks.outputs.run-id }}"
