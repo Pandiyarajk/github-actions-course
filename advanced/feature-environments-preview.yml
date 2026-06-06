@@ -32,7 +32,7 @@ jobs:
       PREVIEW_KEY: pr-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -42,10 +42,10 @@ jobs:
           echo "environment=preview-${PREVIEW_KEY}" >> "$GITHUB_OUTPUT"
           echo "preview_url=https://${PREVIEW_KEY}.preview.example.com" >> "$GITHUB_OUTPUT"
 
-      - name: Install + build web bundle
+      - name: Install + build preview bundle
         run: |
-          npm ci
-          npm run build
+          pip install -r requirements.txt
+          python -m build --outdir dist/
 
       - name: Package preview artifacts
         run: |

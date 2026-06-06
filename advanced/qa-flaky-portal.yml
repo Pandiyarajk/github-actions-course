@@ -60,7 +60,7 @@ JSON
           echo "stats_path=qa/flaky-summary.json" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact for portal
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: flaky-summary
           path: qa/flaky-summary.json
@@ -71,7 +71,7 @@ JSON
     needs: aggregate
     steps:
       - name: Download stats
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: flaky-summary
           path: qa

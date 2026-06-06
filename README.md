@@ -46,7 +46,7 @@ Code Change -> GitHub Event -> Workflow -> Runner -> Job -> Step
 | Prerequisites | Git basics, command-line comfort, basic YAML, and one scripting or programming language. |
 | Delivery | Self-paced study, live workshop, bootcamp, or internal engineering enablement. |
 | Learning loop | Concept -> visual model -> workflow demo -> hands-on lab -> debugging clinic -> quiz. |
-| Toolkit | GitHub Actions, GitHub CLI, Docker, pytest, npm, dotnet, Selenium, Newman, Pact, Slack/Teams webhooks. |
+| Toolkit | GitHub Actions, GitHub CLI, Docker, Python 3.13, Behave (BDD), Selenium, Allure, pylint, Zephyr Scale, Jira, SMTP email. |
 
 ---
 

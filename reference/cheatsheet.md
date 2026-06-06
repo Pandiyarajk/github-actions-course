@@ -65,22 +65,22 @@ jobs:
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v6
     with:
       fetch-depth: 1  # current commit only, fastest
 
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v6
     with:
       fetch-depth: 2  # compare HEAD with HEAD~1
 
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v6
     with:
       fetch-depth: 0  # full history for branch, tag, or merge-base comparisons
 ```
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v6
     with:
       ref: ${{ inputs.target_ref }}
       fetch-depth: 0
@@ -136,12 +136,11 @@ permissions:
 
 | Purpose | Action |
 | --- | --- |
-| Checkout code | `actions/checkout@v4` |
-| Setup Node | `actions/setup-node@v4` |
-| Setup Python | `actions/setup-python@v5` |
-| Setup .NET | `actions/setup-dotnet@v4` |
-| Upload artifact | `actions/upload-artifact@v4` |
-| Download artifact | `actions/download-artifact@v4` |
+| Checkout code | `actions/checkout@v6` |
+| Setup Python | `actions/setup-python@v6` |
+| Cache pip packages | `actions/cache@v5` |
+| Upload artifact | `actions/upload-artifact@v7` |
+| Download artifact | `actions/download-artifact@v8` |
 | Docker build | `docker/build-push-action@v6` |
 | Docker login | `docker/login-action@v3` |
 | Path filtering | `dorny/paths-filter@v3` |

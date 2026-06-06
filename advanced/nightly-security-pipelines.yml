@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -60,7 +60,7 @@ jobs:
           comment-summary-in-pr: false
 
       - name: Upload dependency snapshot
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-review-report
           path: dependency-review-report.json
@@ -75,7 +75,7 @@ jobs:
       IMAGE_TAG: nightly-${{ github.run_number }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build container image (cache aware)
         run: |
@@ -95,7 +95,7 @@ jobs:
           severity: CRITICAL,HIGH,MEDIUM
 
       - name: Upload container scan report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: container-vuln-report
           path: trivy-results.sarif
@@ -118,7 +118,7 @@ jobs:
       issues: write
     steps:
       - name: Download reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: reports
         continue-on-error: true

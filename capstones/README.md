@@ -18,7 +18,7 @@ Path Detection
 Docker Build -> Security Scan -> Staging Deploy -> Approval -> Production Deploy
    |
    v
-Release + Slack Notification
+Release + Email Notification
 ```
 
 Implementation plan:
@@ -32,7 +32,7 @@ Implementation plan:
 7. Add production approval.
 8. Add release tag after production deployment.
 9. Upload test reports and deployment evidence.
-10. Add Slack or Teams failure notification.
+10. Add SMTP email failure notification.
 
 Sample solution structure:
 
@@ -62,7 +62,7 @@ Evaluation checklist:
 
 ### Capstone 2: Unified QA Automation Hub
 
-Build a QA pipeline that runs API, UI, and contract tests and publishes evidence for audit and debugging.
+Build a QA pipeline that runs API, UI, and smoke tests and publishes evidence for audit and debugging.
 
 ```text
 Schedule / Manual Trigger
@@ -70,17 +70,17 @@ Schedule / Manual Trigger
    v
 Start Test Environment
    |
-   +--> API Tests with Newman
-   +--> UI Tests with Selenium
-   +--> Contract Tests with Pact
+   +--> API Tests with Python requests / Behave @api
+   +--> UI Tests with Selenium + Behave
+   +--> Smoke Tests with Behave @smoke
    |
    v
-Collect Reports -> Upload Evidence -> Publish Summary -> Notify QA Channel
+Collect Allure Reports -> Upload Evidence -> Publish Summary -> Notify QA by Email
 ```
 
 Implementation plan:
 
-1. Create separate jobs for API, UI, and contract testing.
+1. Create separate jobs for API, UI, and smoke testing with Behave.
 2. Add scheduled nightly trigger.
 3. Add manual trigger for reruns.
 4. Store test reports under `reports/`.
@@ -97,11 +97,13 @@ Sample solution structure:
 .github/
   workflows/
     qa-nightly.yml
-tests/
+features/
   api/
   ui/
-  contracts/
+  smoke/
+steps/
 reports/
+  allure-results/
 docs/
   qa-triage.md
 ```
