@@ -93,6 +93,10 @@ Capstone Project
 | 14 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](modules/module-14-workflow-naming.md) | 90 min |
 | 15 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](modules/module-15-jobs-and-steps.md) | 120 min |
 | 16 | Beginner | [Environment Variables and Secrets — Setting and Using Them](modules/module-16-env-and-secrets.md) | 120 min |
+| 17 | Beginner | [Artifacts — Uploading Files, Folders, Retention, and Conditions](modules/module-17-artifacts.md) | 120 min |
+| 18 | Intermediate | [Essential Workflow Controls — Concurrency, Permissions, Defaults, and More](modules/module-18-misc-features.md) | 120 min |
+| 19 | Intermediate | [Runners — What They Are and How Concurrent Runs Behave](modules/module-19-runners.md) | 120 min |
+| 20 | Intermediate | [Runner Setup — Creating, Targeting, and Health-Checking Runners](modules/module-20-runner-setup.md) | 150 min |
 
 ---
 

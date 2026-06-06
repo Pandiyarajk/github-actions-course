@@ -1,6 +1,6 @@
 # Module 16: Environment Variables and Secrets — Setting and Using Them
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 15](./module-15-jobs-and-steps.md) | [Next: Capstones](../capstones/README.md)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 15](./module-15-jobs-and-steps.md) | [Next: Module 17](./module-17-artifacts.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-16-env-and-secrets.yml`](../examples/module-16-env-and-secrets.yml)
 
 ## Learning Objectives
@@ -211,4 +211,4 @@ Secrets are masked in logs. Assigning them to `env` is how scripts and tools rec
 
 ---
 
-[Previous: Module 15](./module-15-jobs-and-steps.md) | [Module Index](./README.md) | [Next: Capstones](../capstones/README.md)
+[Previous: Module 15](./module-15-jobs-and-steps.md) | [Module Index](./README.md) | [Next: Module 17](./module-17-artifacts.md)

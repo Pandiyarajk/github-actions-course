@@ -1,0 +1,117 @@
+# Module 18: Misc but essential workflow features
+#
+# A grab-bag of controls you reach for in real workflows:
+#   - concurrency (cancel or queue overlapping runs)
+#   - permissions (least-privilege GITHUB_TOKEN)
+#   - defaults (default shell / working-directory)
+#   - continue-on-error (don't fail the job on one step)
+#   - if conditions (success/always/failure/custom)
+#   - needs + job outputs (pass data between jobs)
+#   - matrix fail-fast / max-parallel
+#   - environment (deployment gates)
+#   - timeout-minutes at job and step level
+name: module-18-misc-features
+run-name: Misc Features - ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Behave tag"
+        type: string
+        default: smoke
+        required: true
+
+# Least-privilege token: only grant what the workflow needs.
+permissions:
+  contents: read
+
+# Only one run of this workflow per ref at a time. Queue new runs instead of
+# cancelling (good for nightly health checks you don't want interrupted).
+concurrency:
+  group: health-check-${{ github.ref }}
+  cancel-in-progress: false
+
+# Defaults applied to every run step in the workflow.
+defaults:
+  run:
+    shell: bash
+    working-directory: .
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Producer job: computes outputs other jobs consume via needs.
+  # ---------------------------------------------------------------------------
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      run_label: ${{ steps.meta.outputs.run_label }}
+      should_deploy: ${{ steps.meta.outputs.should_deploy }}
+    steps:
+      - name: Compute metadata
+        id: meta
+        run: |
+          echo "run_label=bdd-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          # Only "deploy" from the main branch.
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Matrix job: fail-fast + max-parallel + continue-on-error.
+  # ---------------------------------------------------------------------------
+  test-matrix:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false        # let all browsers finish even if one fails
+      max-parallel: 2         # at most 2 matrix jobs at once
+      matrix:
+        browser: [chrome, firefox, msedge]
+    steps:
+      - name: Announce
+        run: echo "Run ${{ needs.setup.outputs.run_label }} on ${{ matrix.browser }}"
+
+      - name: Behave (non-blocking)
+        continue-on-error: true   # a flaky browser won't fail the whole job
+        timeout-minutes: 15       # step-level timeout
+        run: echo "behave --tags=${{ inputs.tags }} -D browser=${{ matrix.browser }}"
+
+  # ---------------------------------------------------------------------------
+  # Conditional + environment-gated "deploy" job.
+  # ---------------------------------------------------------------------------
+  publish:
+    needs: [setup, test-matrix]
+    # Run only when setup said so AND prior jobs didn't fail.
+    if: ${{ needs.setup.outputs.should_deploy == 'true' && success() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production          # ties to environment protection rules/approvals
+      url: https://prod.your-domain.com
+    permissions:
+      contents: write           # widen token only for this job
+    steps:
+      - name: Publish results
+        run: echo "Publishing ${{ needs.setup.outputs.run_label }} to production"
+
+  # ---------------------------------------------------------------------------
+  # Always-run summary job (runs even if earlier jobs failed).
+  # ---------------------------------------------------------------------------
+  summary:
+    needs: [setup, test-matrix, publish]
+    if: always()                # report regardless of upstream outcome
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write run summary
+        run: |
+          {
+            echo "## Run Summary"
+            echo "- Label: ${{ needs.setup.outputs.run_label }}"
+            echo "- Matrix result: ${{ needs.test-matrix.result }}"
+            echo "- Publish result: ${{ needs.publish.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"

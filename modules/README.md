@@ -67,6 +67,10 @@ Capstones:    Apply everything in realistic delivery scenarios
 | 14 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](module-14-workflow-naming.md) | 90 min | [`module-14-workflow-naming.yml`](../examples/module-14-workflow-naming.yml) |
 | 15 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](module-15-jobs-and-steps.md) | 120 min | [`module-15-jobs-and-steps.yml`](../examples/module-15-jobs-and-steps.yml) |
 | 16 | Beginner | [Environment Variables and Secrets — Setting and Using Them](module-16-env-and-secrets.md) | 120 min | [`module-16-env-and-secrets.yml`](../examples/module-16-env-and-secrets.yml) |
+| 17 | Beginner | [Artifacts — Uploading Files, Folders, Retention, and Conditions](module-17-artifacts.md) | 120 min | [`module-17-artifacts.yml`](../examples/module-17-artifacts.yml) |
+| 18 | Intermediate | [Essential Workflow Controls — Concurrency, Permissions, Defaults, and More](module-18-misc-features.md) | 120 min | [`module-18-misc-features.yml`](../examples/module-18-misc-features.yml) |
+| 19 | Intermediate | [Runners — What They Are and How Concurrent Runs Behave](module-19-runners.md) | 120 min | [`module-19-runners.yml`](../examples/module-19-runners.yml) |
+| 20 | Intermediate | [Runner Setup — Creating, Targeting, and Health-Checking Runners](module-20-runner-setup.md) | 150 min | [`module-20-runner-setup.yml`](../examples/module-20-runner-setup.yml) |
 
 ## How To Study Each Module
 

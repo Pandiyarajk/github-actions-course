@@ -1,0 +1,74 @@
+# Module 20: Runner setup, labels, versions, and health checks
+#
+# This workflow does NOT install a runner (that is done on the machine — see
+# the module). It demonstrates how to TARGET runner labels/versions and how to
+# inspect the runner image and verify a self-hosted runner is alive.
+name: module-20-runner-setup
+run-name: Runner Setup - ${{ inputs.runner_label || 'ubuntu-latest' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner_label:
+        description: "Runner label / image to target"
+        type: choice
+        options:
+          - ubuntu-latest          # rolling latest Ubuntu image
+          - ubuntu-24.04           # version-pinned Ubuntu
+          - ubuntu-22.04           # version-pinned Ubuntu
+          - windows-latest         # rolling latest Windows image
+          - windows-2025           # version-pinned Windows Server
+          - windows-2022           # version-pinned Windows Server
+        default: ubuntu-latest
+        required: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Inspect a GitHub-hosted runner image: OS, version, tools.
+  # ---------------------------------------------------------------------------
+  inspect-hosted:
+    runs-on: ${{ inputs.runner_label }}
+    timeout-minutes: 10
+    steps:
+      - name: Show runner OS and version (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          echo "Runner OS:   $RUNNER_OS"
+          echo "Image label: ${{ inputs.runner_label }}"
+          uname -a
+          cat /etc/os-release | grep PRETTY_NAME
+          python3 --version || true
+
+      - name: Show runner OS and version (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Write-Host "Runner OS:   $env:RUNNER_OS"
+          Write-Host "Image label: ${{ inputs.runner_label }}"
+          [System.Environment]::OSVersion.Version
+          (Get-CimInstance Win32_OperatingSystem).Caption
+          python --version
+
+  # ---------------------------------------------------------------------------
+  # Target a SELF-HOSTED runner by composite labels and verify it responds.
+  # The runner must already be installed and online on the client machine.
+  # ---------------------------------------------------------------------------
+  verify-self-hosted:
+    # Composite labels: ALL must match a single registered runner.
+    runs-on: [self-hosted, windows, server1]
+    timeout-minutes: 10
+    steps:
+      - name: Confirm the self-hosted runner picked up the job
+        shell: powershell
+        run: |
+          Write-Host "Runner name: $env:RUNNER_NAME"
+          Write-Host "Runner OS:   $env:RUNNER_OS"
+          Write-Host "Labels matched: self-hosted, windows, server1"
+          Write-Host "If you can read this, the runner is online and healthy."
+
+      - name: Check installed tooling on the client
+        shell: powershell
+        run: |
+          python --version
+          py --version

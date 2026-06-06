@@ -1,0 +1,130 @@
+# Module 17: Artifacts — uploading files, folders, retention, and conditions
+#
+# Artifacts let a workflow save files (reports, screenshots, logs) so you can
+# download them after the run, or pass them to another job.
+#
+# Key points shown here:
+#   - upload a single file vs a whole folder vs multiple paths
+#   - retention-days (how long GitHub keeps the artifact)
+#   - artifacts are always downloaded as a .zip
+#   - if: success() vs if: always() vs if: failure()
+#   - multiple upload steps in one job
+#   - compression level and missing-file handling
+name: module-17-artifacts
+run-name: Artifacts - ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Behave tag"
+        type: string
+        default: smoke
+        required: true
+
+env:
+  ALLURE_RESULTS: reports/allure-results
+  SCREENSHOTS: reports/screenshots
+
+jobs:
+  produce-and-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # Create some sample evidence so the uploads have content.
+      - name: Generate sample reports
+        run: |
+          mkdir -p "$ALLURE_RESULTS" "$SCREENSHOTS"
+          echo '{"tag": "${{ inputs.tags }}", "passed": 12, "failed": 1}' > "$ALLURE_RESULTS/summary.json"
+          echo "page load: 1.2s" > "$ALLURE_RESULTS/timing.txt"
+          echo "fake-png-bytes" > "$SCREENSHOTS/login_failure.png"
+          echo "behave --tags=${{ inputs.tags }}" > behave-command.txt
+
+      # 1) Upload a SINGLE FILE.
+      - name: Upload a single file
+        uses: actions/upload-artifact@v7
+        with:
+          name: behave-command          # artifact name (download is behave-command.zip)
+          path: behave-command.txt
+
+      # 2) Upload a WHOLE FOLDER (folder structure is preserved inside the zip).
+      - name: Upload Allure results folder
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results
+          path: ${{ env.ALLURE_RESULTS }}
+          retention-days: 30            # keep for 30 days (default is 90, max 90)
+
+      # 3) Upload MULTIPLE PATHS into one artifact (globs allowed).
+      - name: Upload combined evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: combined-evidence
+          path: |
+            reports/**
+            behave-command.txt
+          retention-days: 7
+
+      # 4) Tune compression and handle a possibly-missing path.
+      - name: Upload with max compression
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: ${{ env.SCREENSHOTS }}
+          compression-level: 9          # 0 (store) .. 9 (smallest); default 6
+          if-no-files-found: warn       # error | warn | ignore
+          retention-days: 14
+
+  conditional-uploads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Run tests (may fail)
+        id: tests
+        continue-on-error: true         # let later upload steps run regardless
+        run: |
+          mkdir -p reports
+          echo "test log line" > reports/run.log
+          echo "behave --tags=${{ inputs.tags }}"
+          # Uncomment to simulate a failure:
+          # exit 1
+
+      # 5) Upload ONLY on success — skipped if a prior step failed.
+      - name: Upload report on success only
+        if: success()
+        uses: actions/upload-artifact@v7
+        with:
+          name: success-report
+          path: reports/run.log
+          retention-days: 30
+
+      # 6) Upload ALWAYS — even when the run failed (best for evidence/logs).
+      - name: Upload evidence always
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: evidence-always
+          path: reports/**
+          if-no-files-found: ignore
+          retention-days: 30
+
+      # 7) Upload ONLY on failure — capture extra debug data when things break.
+      - name: Upload debug bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failure-debug
+          path: reports/**

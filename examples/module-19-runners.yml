@@ -1,0 +1,85 @@
+# Module 19: Runners — what they are and how concurrent runs behave
+#
+# A "runner" is the machine that executes a job. Two kinds:
+#   - GitHub-hosted: fresh VM per job (ubuntu-latest, windows-latest, ...)
+#   - Self-hosted:   your own machine, selected by labels (server1..server4)
+#
+# This example shows runner identity, what differs across runners, and what
+# happens when the same workflow is triggered many times.
+name: module-19-runners
+run-name: Runners - ${{ inputs.runner || 'ubuntu-latest' }} | run ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "Runner to use"
+        type: choice
+        options:
+          - ubuntu-latest
+          - windows-latest
+          - server1
+          - server2
+          - server3
+          - server4
+        default: ubuntu-latest
+        required: true
+
+# A serialized lane: trigger this workflow many times and the runs QUEUE here,
+# one at a time per runner, instead of all executing at once.
+# Set cancel-in-progress: true to instead cancel an older run when a new one starts.
+concurrency:
+  group: runner-demo-${{ inputs.runner || 'ubuntu-latest' }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: identify the runner that picked up this job.
+  # ---------------------------------------------------------------------------
+  who-am-i:
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    steps:
+      - name: Print runner identity
+        shell: bash
+        run: |
+          echo "Runner name : $RUNNER_NAME"     # specific machine name
+          echo "Runner OS   : $RUNNER_OS"       # Linux / Windows / macOS
+          echo "Runner arch : $RUNNER_ARCH"
+          echo "Run number  : ${{ github.run_number }}"   # increments per run
+          echo "Run attempt : ${{ github.run_attempt }}"  # increments on re-run
+          echo "Run ID      : ${{ github.run_id }}"        # unique per run
+
+      # Show that a GitHub-hosted runner starts clean each time, while a
+      # self-hosted runner keeps state between runs unless you clean it.
+      - name: Demonstrate workspace state
+        shell: bash
+        run: |
+          if [ -f marker.txt ]; then
+            echo "marker.txt already exists -> persistent (self-hosted) runner"
+            cat marker.txt
+          else
+            echo "marker.txt not found -> fresh workspace (typical GitHub-hosted)"
+          fi
+          echo "created by run ${{ github.run_number }}" > marker.txt
+
+  # ---------------------------------------------------------------------------
+  # Job 2: the SAME job definition fanned out to DIFFERENT runners at once.
+  # Each matrix entry gets its own runner and runs in parallel.
+  # ---------------------------------------------------------------------------
+  across-runners:
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.target }}
+    steps:
+      - name: Report where this copy ran
+        shell: bash
+        run: |
+          echo "This matrix copy ran on: ${{ matrix.target }}"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Each runner is isolated: they do NOT share files or environment."
