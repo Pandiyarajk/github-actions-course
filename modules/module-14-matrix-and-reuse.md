@@ -1,7 +1,7 @@
-# Module 4: Matrix Builds, Marketplace Actions, and Reusable Workflows
+# Module 14: Matrix Builds, Marketplace Actions, and Reusable Workflows
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 3](./module-03-secrets-security.md) | [Next: Module 5](./module-05-multi-language-tests.md)
-> Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-04-matrix-and-reuse.yml`](../examples/module-04-matrix-and-reuse.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 13](./module-13-secrets-security.md) | [Next: Module 15](./module-15-multi-language-tests.md)
+> Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-14-matrix-and-reuse.yml`](../examples/module-14-matrix-and-reuse.yml)
 
 ## Learning Objectives
 
@@ -224,4 +224,4 @@ jobs:
 
 ---
 
-[Previous: Module 3](./module-03-secrets-security.md) | [Module Index](./README.md) | [Next: Module 5](./module-05-multi-language-tests.md)
+[Previous: Module 13](./module-13-secrets-security.md) | [Module Index](./README.md) | [Next: Module 15](./module-15-multi-language-tests.md)

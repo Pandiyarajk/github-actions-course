@@ -1,7 +1,7 @@
-# Module 11: Running Python, Shell, Bash, and CMD in Workflows
+# Module 9: Running Python, Shell, Bash, and CMD in Workflows
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 10](./module-10-notifications.md) | [Next: Module 12](./module-12-scheduled-workflows.md)
-> Level: **Beginner** | Time: **90 min** | Example workflow: [`module-11-running-scripts.yml`](../examples/module-11-running-scripts.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 8](./module-08-env-and-secrets.md) | [Next: Module 10](./module-10-artifacts.md)
+> Level: **Beginner** | Time: **90 min** | Example workflow: [`module-09-running-scripts.yml`](../examples/module-09-running-scripts.yml)
 
 ## Learning Objectives
 
@@ -100,7 +100,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example covers every common pattern across Linux and Windows runners: a Python file, inline Python (`-c` and heredoc), a shell script, inline bash, `cmd`, and PowerShell. See [`module-11-running-scripts.yml`](../examples/module-11-running-scripts.yml).
+The full example covers every common pattern across Linux and Windows runners: a Python file, inline Python (`-c` and heredoc), a shell script, inline bash, `cmd`, and PowerShell. See [`module-09-running-scripts.yml`](../examples/module-09-running-scripts.yml).
 
 ### Run a Python `.py` file
 
@@ -217,4 +217,4 @@ You can also set `shell: python` to make the whole `run:` block a Python script:
 
 ---
 
-[Previous: Module 10](./module-10-notifications.md) | [Module Index](./README.md) | [Next: Module 12](./module-12-scheduled-workflows.md)
+[Previous: Module 8](./module-08-env-and-secrets.md) | [Module Index](./README.md) | [Next: Module 10](./module-10-artifacts.md)

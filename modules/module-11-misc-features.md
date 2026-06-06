@@ -1,7 +1,7 @@
-# Module 18: Essential Workflow Controls — Concurrency, Permissions, Defaults, and More
+# Module 11: Essential Workflow Controls — Concurrency, Permissions, Defaults, and More
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 17](./module-17-artifacts.md) | [Next: Module 19](./module-19-runners.md)
-> Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-18-misc-features.yml`](../examples/module-18-misc-features.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 10](./module-10-artifacts.md) | [Next: Module 12](./module-12-workflow-syntax.md)
+> Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-11-misc-features.yml`](../examples/module-11-misc-features.yml)
 
 ## Learning Objectives
 
@@ -116,7 +116,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example chains a producer job, a controlled matrix, a gated publish job, and an always-run summary. See [`module-18-misc-features.yml`](../examples/module-18-misc-features.yml).
+The full example chains a producer job, a controlled matrix, a gated publish job, and an always-run summary. See [`module-11-misc-features.yml`](../examples/module-11-misc-features.yml).
 
 ### Concurrency, Permissions, and Defaults
 
@@ -218,4 +218,4 @@ summary:
 
 ---
 
-[Previous: Module 17](./module-17-artifacts.md) | [Module Index](./README.md) | [Next: Module 19](./module-19-runners.md)
+[Previous: Module 10](./module-10-artifacts.md) | [Module Index](./README.md) | [Next: Module 12](./module-12-workflow-syntax.md)

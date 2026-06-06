@@ -1,6 +1,6 @@
 # Module 1: CI/CD and GitHub Actions Foundations
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | Previous: none | [Next: Module 2](./module-02-workflow-syntax.md)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | Previous: none | [Next: Module 2](./module-02-workflow-naming.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-01-ci-foundations.yml`](../examples/module-01-ci-foundations.yml)
 
 ## Learning Objectives
@@ -163,4 +163,4 @@ jobs:
 
 ---
 
-Previous: none | [Module Index](./README.md) | [Next: Module 2](./module-02-workflow-syntax.md)
+Previous: none | [Module Index](./README.md) | [Next: Module 2](./module-02-workflow-naming.md)

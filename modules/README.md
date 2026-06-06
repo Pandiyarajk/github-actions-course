@@ -11,66 +11,64 @@ Conventions used throughout: Python 3.13, Behave, Selenium, Allure, `pylint`, se
 
 ## Recommended Path
 
+The modules are ordered to follow a workflow file top-to-bottom first, then applied CI/CD topics:
+
 ```text
-Beginner:     Modules 1-3
-Intermediate: Modules 4-7
-Advanced:     Modules 8-10
-Capstones:    Apply everything in realistic delivery scenarios
+Part A — Workflow components (Modules 1-11):
+  name -> run-name -> on (triggers) -> schedule -> runners -> runner setup
+  -> jobs / runs-on / timeout / steps -> env & secrets -> scripts -> artifacts -> core controls
+
+Part B — Applied CI/CD (Modules 12-20):
+  syntax & expressions -> secure pipelines -> matrix & reuse -> testing
+  -> Docker & caching -> releases -> QA automation -> monorepo -> notifications
+
+Capstones: Apply everything in realistic delivery scenarios
 ```
 
 ## Level Breakdown
 
-### Beginner: Modules 1-3
+### Part A — Workflow Components (Modules 1-11)
 
 | Requirement | Study Focus |
 | --- | --- |
-| Learning objectives | Understand CI/CD, workflow syntax, triggers, jobs, steps, secrets, variables, and basic debugging. |
-| Key concepts | Workflow, event, runner, job, step, action, context, expression, secret, variable, artifact. |
-| Hands-on exercises | Create first workflows, use manual inputs, run pull request checks, validate secrets, upload one artifact. |
-| Expected outcomes | Learners can build and debug simple CI workflows without copying blindly. |
+| Learning objectives | Read and author every part of a workflow file: `name`/`run-name`, `on` triggers, scheduling, runners, jobs/`runs-on`/`timeout-minutes`, `env`/secrets, running scripts, artifacts, and core controls (concurrency, permissions). |
+| Key concepts | Workflow, event, trigger, runner, job, step, env, secret, artifact, concurrency, expression. |
+| Hands-on exercises | Name runs dynamically, filter triggers, schedule with cron, target runners, scope env/secrets, run Python/shell/cmd, upload artifacts. |
+| Expected outcomes | Learners can build and debug workflows component-by-component without copying blindly. |
 
-### Intermediate: Modules 4-7
-
-| Requirement | Study Focus |
-| --- | --- |
-| Learning objectives | Build browser/server matrix jobs, reusable workflows, multi-layer Python test pipelines, Selenium Grid via Docker, cached workflows, and Zephyr release cycles. |
-| Key concepts | Matrix strategy, reusable workflow, composite action, Allure report, Selenium Grid, pip cache key, environment, Zephyr test cycle. |
-| Hands-on exercises | Run browser matrices, upload Allure reports, cache pip dependencies, run Behave against a Selenium Grid, create Zephyr release cycles. |
-| Expected outcomes | Learners can design practical team test-automation workflows with clear feedback and repeatable outputs. |
-
-### Advanced: Modules 8-10
+### Part B — Applied CI/CD (Modules 12-20)
 
 | Requirement | Study Focus |
 | --- | --- |
-| Learning objectives | Operate nightly QA automation, monorepo path filtering, self-hosted runners, SMTP notifications, debugging workflows, and governance controls. |
-| Key concepts | Allure evidence, path filtering, runner labels (`server1`–`server4`), least privilege, step summaries, SMTP alerts, concurrency, timeout. |
-| Hands-on exercises | Build nightly Behave/Selenium QA workflows, target self-hosted runners safely, write step summaries, add SMTP failure notifications, harden permissions. |
-| Expected outcomes | Learners can support production-grade test automation with security, observability, and maintainability. |
+| Learning objectives | Apply the components to real pipelines: expressions/outputs, secure pipelines, browser/server matrices, multi-layer Python test pipelines, Selenium Grid via Docker, releases, nightly QA, monorepos, and notifications. |
+| Key concepts | Matrix strategy, reusable workflow, Allure report, Selenium Grid, pip cache key, environment, Zephyr cycle, path filtering, SMTP alerts. |
+| Hands-on exercises | Run browser matrices, upload Allure reports, cache pip dependencies, run Behave against a Selenium Grid, create Zephyr release cycles, build nightly QA, add SMTP notifications. |
+| Expected outcomes | Learners can design production-grade test-automation workflows with security, observability, and maintainability. |
 
 ## Module Index
 
 | # | Level | Module | Time | Runnable Example |
 | --- | --- | --- | --- | --- |
 | 1 | Beginner | [CI/CD and GitHub Actions Foundations](module-01-ci-foundations.md) | 90 min | [`module-01-ci-foundations.yml`](../examples/module-01-ci-foundations.yml) |
-| 2 | Beginner | [Workflow Syntax, Jobs, Steps, and Expressions](module-02-workflow-syntax.md) | 120 min | [`module-02-syntax-and-expressions.yml`](../examples/module-02-syntax-and-expressions.yml) |
-| 3 | Beginner | [Secrets, Variables, and Secure Pipelines](module-03-secrets-security.md) | 120 min | [`module-03-secrets-security.yml`](../examples/module-03-secrets-security.yml) |
-| 4 | Intermediate | [Matrix Builds, Marketplace Actions, and Reusable Workflows](module-04-matrix-and-reuse.md) | 120 min | [`module-04-matrix-and-reuse.yml`](../examples/module-04-matrix-and-reuse.yml) |
-| 5 | Intermediate | [Automated Testing Pipelines](module-05-multi-language-tests.md) | 120 min | [`module-05-multi-language-tests.yml`](../examples/module-05-multi-language-tests.yml) |
-| 6 | Intermediate | [Docker, Artifacts, Caching, and Performance](module-06-docker-performance.md) | 150 min | [`module-06-docker-performance.yml`](../examples/module-06-docker-performance.yml) |
-| 7 | Intermediate | [Deployment, Versioning, Tagging, and Release Automation](module-07-release-automation.md) | 150 min | [`module-07-release-automation.yml`](../examples/module-07-release-automation.yml) |
-| 8 | Advanced | [QA Automation Workflows](module-08-qa-automation.md) | 150 min | [`module-08-qa-automation.yml`](../examples/module-08-qa-automation.yml) |
-| 9 | Advanced | [Monorepos, Enterprise Patterns, and Self-Hosted Runners](module-09-monorepo-best-practices.md) | 150 min | [`module-09-monorepo-best-practices.yml`](../examples/module-09-monorepo-best-practices.yml) |
-| 10 | Advanced | [Notifications, Observability, Debugging, and Governance](module-10-notifications.md) | 120 min | [`module-10-notifications.yml`](../examples/module-10-notifications.yml) |
-| 11 | Beginner | [Running Python, Shell, Bash, and CMD in Workflows](module-11-running-scripts.md) | 90 min | [`module-11-running-scripts.yml`](../examples/module-11-running-scripts.yml) |
-| 12 | Beginner | [Scheduling Workflow Runs with Cron](module-12-scheduled-workflows.md) | 90 min | [`module-12-scheduled-workflows.yml`](../examples/module-12-scheduled-workflows.yml) |
-| 13 | Beginner | [The `on` Section — Workflow Triggers and Event Filters](module-13-workflow-triggers.md) | 120 min | [`module-13-workflow-triggers.yml`](../examples/module-13-workflow-triggers.yml) |
-| 14 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](module-14-workflow-naming.md) | 90 min | [`module-14-workflow-naming.yml`](../examples/module-14-workflow-naming.yml) |
-| 15 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](module-15-jobs-and-steps.md) | 120 min | [`module-15-jobs-and-steps.yml`](../examples/module-15-jobs-and-steps.yml) |
-| 16 | Beginner | [Environment Variables and Secrets — Setting and Using Them](module-16-env-and-secrets.md) | 120 min | [`module-16-env-and-secrets.yml`](../examples/module-16-env-and-secrets.yml) |
-| 17 | Beginner | [Artifacts — Uploading Files, Folders, Retention, and Conditions](module-17-artifacts.md) | 120 min | [`module-17-artifacts.yml`](../examples/module-17-artifacts.yml) |
-| 18 | Intermediate | [Essential Workflow Controls — Concurrency, Permissions, Defaults, and More](module-18-misc-features.md) | 120 min | [`module-18-misc-features.yml`](../examples/module-18-misc-features.yml) |
-| 19 | Intermediate | [Runners — What They Are and How Concurrent Runs Behave](module-19-runners.md) | 120 min | [`module-19-runners.yml`](../examples/module-19-runners.yml) |
-| 20 | Intermediate | [Runner Setup — Creating, Targeting, and Health-Checking Runners](module-20-runner-setup.md) | 150 min | [`module-20-runner-setup.yml`](../examples/module-20-runner-setup.yml) |
+| 2 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](module-02-workflow-naming.md) | 90 min | [`module-02-workflow-naming.yml`](../examples/module-02-workflow-naming.yml) |
+| 3 | Beginner | [The `on` Section — Workflow Triggers and Event Filters](module-03-workflow-triggers.md) | 120 min | [`module-03-workflow-triggers.yml`](../examples/module-03-workflow-triggers.yml) |
+| 4 | Beginner | [Scheduling Workflow Runs with Cron](module-04-scheduled-workflows.md) | 90 min | [`module-04-scheduled-workflows.yml`](../examples/module-04-scheduled-workflows.yml) |
+| 5 | Intermediate | [Runners — What They Are and How Concurrent Runs Behave](module-05-runners.md) | 120 min | [`module-05-runners.yml`](../examples/module-05-runners.yml) |
+| 6 | Intermediate | [Runner Setup — Creating, Targeting, and Health-Checking Runners](module-06-runner-setup.md) | 150 min | [`module-06-runner-setup.yml`](../examples/module-06-runner-setup.yml) |
+| 7 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](module-07-jobs-and-steps.md) | 120 min | [`module-07-jobs-and-steps.yml`](../examples/module-07-jobs-and-steps.yml) |
+| 8 | Beginner | [Environment Variables and Secrets — Setting and Using Them](module-08-env-and-secrets.md) | 120 min | [`module-08-env-and-secrets.yml`](../examples/module-08-env-and-secrets.yml) |
+| 9 | Beginner | [Running Python, Shell, Bash, and CMD in Workflows](module-09-running-scripts.md) | 90 min | [`module-09-running-scripts.yml`](../examples/module-09-running-scripts.yml) |
+| 10 | Beginner | [Artifacts — Uploading Files, Folders, Retention, and Conditions](module-10-artifacts.md) | 120 min | [`module-10-artifacts.yml`](../examples/module-10-artifacts.yml) |
+| 11 | Intermediate | [Essential Workflow Controls — Concurrency, Permissions, Defaults, and More](module-11-misc-features.md) | 120 min | [`module-11-misc-features.yml`](../examples/module-11-misc-features.yml) |
+| 12 | Beginner | [Workflow Syntax, Jobs, Steps, and Expressions](module-12-workflow-syntax.md) | 120 min | [`module-12-workflow-syntax.yml`](../examples/module-12-workflow-syntax.yml) |
+| 13 | Beginner | [Secrets, Variables, and Secure Pipelines](module-13-secrets-security.md) | 120 min | [`module-13-secrets-security.yml`](../examples/module-13-secrets-security.yml) |
+| 14 | Intermediate | [Matrix Builds, Marketplace Actions, and Reusable Workflows](module-14-matrix-and-reuse.md) | 120 min | [`module-14-matrix-and-reuse.yml`](../examples/module-14-matrix-and-reuse.yml) |
+| 15 | Intermediate | [Automated Testing Pipelines](module-15-multi-language-tests.md) | 120 min | [`module-15-multi-language-tests.yml`](../examples/module-15-multi-language-tests.yml) |
+| 16 | Intermediate | [Docker, Artifacts, Caching, and Performance](module-16-docker-performance.md) | 150 min | [`module-16-docker-performance.yml`](../examples/module-16-docker-performance.yml) |
+| 17 | Intermediate | [Deployment, Versioning, Tagging, and Release Automation](module-17-release-automation.md) | 150 min | [`module-17-release-automation.yml`](../examples/module-17-release-automation.yml) |
+| 18 | Advanced | [QA Automation Workflows](module-18-qa-automation.md) | 150 min | [`module-18-qa-automation.yml`](../examples/module-18-qa-automation.yml) |
+| 19 | Advanced | [Monorepos, Enterprise Patterns, and Self-Hosted Runners](module-19-monorepo-best-practices.md) | 150 min | [`module-19-monorepo-best-practices.yml`](../examples/module-19-monorepo-best-practices.yml) |
+| 20 | Advanced | [Notifications, Observability, Debugging, and Governance](module-20-notifications.md) | 120 min | [`module-20-notifications.yml`](../examples/module-20-notifications.yml) |
 
 ## How To Study Each Module
 

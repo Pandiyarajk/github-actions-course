@@ -1,7 +1,7 @@
-# Module 17: Artifacts — Uploading Files, Folders, Retention, and Conditions
+# Module 10: Artifacts — Uploading Files, Folders, Retention, and Conditions
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 16](./module-16-env-and-secrets.md) | [Next: Module 18](./module-18-misc-features.md)
-> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-17-artifacts.yml`](../examples/module-17-artifacts.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 9](./module-09-running-scripts.md) | [Next: Module 11](./module-11-misc-features.md)
+> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-10-artifacts.yml`](../examples/module-10-artifacts.yml)
 
 ## Learning Objectives
 
@@ -117,7 +117,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example shows single-file, folder, multi-path, compression, and conditional uploads. See [`module-17-artifacts.yml`](../examples/module-17-artifacts.yml).
+The full example shows single-file, folder, multi-path, compression, and conditional uploads. See [`module-10-artifacts.yml`](../examples/module-10-artifacts.yml).
 
 ### Single File, Folder, and Multiple Paths
 
@@ -208,4 +208,4 @@ Pair `if: always()` with a step that has `continue-on-error: true` so the upload
 
 ---
 
-[Previous: Module 16](./module-16-env-and-secrets.md) | [Module Index](./README.md) | [Next: Module 18](./module-18-misc-features.md)
+[Previous: Module 9](./module-09-running-scripts.md) | [Module Index](./README.md) | [Next: Module 11](./module-11-misc-features.md)

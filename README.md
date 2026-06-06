@@ -13,9 +13,9 @@ A practical, industry-ready GitHub Actions course for developers, QA engineers, 
 
 1. Read this page to understand the path.
 2. Open the [Module Study Guide](modules/README.md).
-3. Complete Modules 1-3 if you are new to GitHub Actions.
-4. Complete Modules 4-7 if you need production CI/CD skills.
-5. Complete Modules 8-10 and the [Capstones](capstones/README.md) if you support QA, deployment, security, or enterprise workflows.
+3. Work through Modules 1-11 to learn the workflow file top-to-bottom (`name`, `on`, scheduling, runners, jobs, env/secrets, scripts, artifacts, and core controls).
+4. Continue with Modules 12-17 for applied CI/CD skills (syntax, secure pipelines, matrix/reuse, testing, Docker, releases).
+5. Finish with Modules 18-20 and the [Capstones](capstones/README.md) if you support QA, enterprise, and observability workflows.
 
 ```text
 Code Change -> GitHub Event -> Workflow -> Runner -> Job -> Step
@@ -54,9 +54,26 @@ Code Change -> GitHub Event -> Workflow -> Runner -> Job -> Step
 
 | Level | Modules | Focus | Estimated Time |
 | --- | --- | --- | --- |
-| Beginner | 1-3 | Foundations, YAML, triggers, secrets | 5-6 hours |
-| Intermediate | 4-7 | Matrix builds, testing, Docker, caching, releases | 8-10 hours |
-| Advanced | 8-10 + capstones | QA automation, enterprise patterns, security, deployment | 8-12 hours |
+| 1 | Beginner | [CI/CD and GitHub Actions Foundations](modules/module-01-ci-foundations.md) | 90 min |
+| 2 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](modules/module-02-workflow-naming.md) | 90 min |
+| 3 | Beginner | [The `on` Section — Workflow Triggers and Event Filters](modules/module-03-workflow-triggers.md) | 120 min |
+| 4 | Beginner | [Scheduling Workflow Runs with Cron](modules/module-04-scheduled-workflows.md) | 90 min |
+| 5 | Intermediate | [Runners — What They Are and How Concurrent Runs Behave](modules/module-05-runners.md) | 120 min |
+| 6 | Intermediate | [Runner Setup — Creating, Targeting, and Health-Checking Runners](modules/module-06-runner-setup.md) | 150 min |
+| 7 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](modules/module-07-jobs-and-steps.md) | 120 min |
+| 8 | Beginner | [Environment Variables and Secrets — Setting and Using Them](modules/module-08-env-and-secrets.md) | 120 min |
+| 9 | Beginner | [Running Python, Shell, Bash, and CMD in Workflows](modules/module-09-running-scripts.md) | 90 min |
+| 10 | Beginner | [Artifacts — Uploading Files, Folders, Retention, and Conditions](modules/module-10-artifacts.md) | 120 min |
+| 11 | Intermediate | [Essential Workflow Controls — Concurrency, Permissions, Defaults, and More](modules/module-11-misc-features.md) | 120 min |
+| 12 | Beginner | [Workflow Syntax, Jobs, Steps, and Expressions](modules/module-12-workflow-syntax.md) | 120 min |
+| 13 | Beginner | [Secrets, Variables, and Secure Pipelines](modules/module-13-secrets-security.md) | 120 min |
+| 14 | Intermediate | [Matrix Builds, Marketplace Actions, and Reusable Workflows](modules/module-14-matrix-and-reuse.md) | 120 min |
+| 15 | Intermediate | [Automated Testing Pipelines](modules/module-15-multi-language-tests.md) | 120 min |
+| 16 | Intermediate | [Docker, Artifacts, Caching, and Performance](modules/module-16-docker-performance.md) | 150 min |
+| 17 | Intermediate | [Deployment, Versioning, Tagging, and Release Automation](modules/module-17-release-automation.md) | 150 min |
+| 18 | Advanced | [QA Automation Workflows](modules/module-18-qa-automation.md) | 150 min |
+| 19 | Advanced | [Monorepos, Enterprise Patterns, and Self-Hosted Runners](modules/module-19-monorepo-best-practices.md) | 150 min |
+| 20 | Advanced | [Notifications, Observability, Debugging, and Governance](modules/module-20-notifications.md) | 120 min |
 
 ```text
 Beginner
@@ -78,25 +95,25 @@ Capstone Project
 | # | Level | Module | Time |
 | --- | --- | --- | --- |
 | 1 | Beginner | [CI/CD and GitHub Actions Foundations](modules/module-01-ci-foundations.md) | 90 min |
-| 2 | Beginner | [Workflow Syntax, Jobs, Steps, and Expressions](modules/module-02-workflow-syntax.md) | 120 min |
-| 3 | Beginner | [Secrets, Variables, and Secure Pipelines](modules/module-03-secrets-security.md) | 120 min |
-| 4 | Intermediate | [Matrix Builds, Marketplace Actions, and Reusable Workflows](modules/module-04-matrix-and-reuse.md) | 120 min |
-| 5 | Intermediate | [Automated Testing Pipelines](modules/module-05-multi-language-tests.md) | 120 min |
-| 6 | Intermediate | [Docker, Artifacts, Caching, and Performance](modules/module-06-docker-performance.md) | 150 min |
-| 7 | Intermediate | [Deployment, Versioning, Tagging, and Release Automation](modules/module-07-release-automation.md) | 150 min |
-| 8 | Advanced | [QA Automation Workflows](modules/module-08-qa-automation.md) | 150 min |
-| 9 | Advanced | [Monorepos, Enterprise Patterns, and Self-Hosted Runners](modules/module-09-monorepo-best-practices.md) | 150 min |
-| 10 | Advanced | [Notifications, Observability, Debugging, and Governance](modules/module-10-notifications.md) | 120 min |
-| 11 | Beginner | [Running Python, Shell, Bash, and CMD in Workflows](modules/module-11-running-scripts.md) | 90 min |
-| 12 | Beginner | [Scheduling Workflow Runs with Cron](modules/module-12-scheduled-workflows.md) | 90 min |
-| 13 | Beginner | [The `on` Section — Workflow Triggers and Event Filters](modules/module-13-workflow-triggers.md) | 120 min |
-| 14 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](modules/module-14-workflow-naming.md) | 90 min |
-| 15 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](modules/module-15-jobs-and-steps.md) | 120 min |
-| 16 | Beginner | [Environment Variables and Secrets — Setting and Using Them](modules/module-16-env-and-secrets.md) | 120 min |
-| 17 | Beginner | [Artifacts — Uploading Files, Folders, Retention, and Conditions](modules/module-17-artifacts.md) | 120 min |
-| 18 | Intermediate | [Essential Workflow Controls — Concurrency, Permissions, Defaults, and More](modules/module-18-misc-features.md) | 120 min |
-| 19 | Intermediate | [Runners — What They Are and How Concurrent Runs Behave](modules/module-19-runners.md) | 120 min |
-| 20 | Intermediate | [Runner Setup — Creating, Targeting, and Health-Checking Runners](modules/module-20-runner-setup.md) | 150 min |
+| 2 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](modules/module-02-workflow-naming.md) | 90 min |
+| 3 | Beginner | [The `on` Section — Workflow Triggers and Event Filters](modules/module-03-workflow-triggers.md) | 120 min |
+| 4 | Beginner | [Scheduling Workflow Runs with Cron](modules/module-04-scheduled-workflows.md) | 90 min |
+| 5 | Intermediate | [Runners — What They Are and How Concurrent Runs Behave](modules/module-05-runners.md) | 120 min |
+| 6 | Intermediate | [Runner Setup — Creating, Targeting, and Health-Checking Runners](modules/module-06-runner-setup.md) | 150 min |
+| 7 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](modules/module-07-jobs-and-steps.md) | 120 min |
+| 8 | Beginner | [Environment Variables and Secrets — Setting and Using Them](modules/module-08-env-and-secrets.md) | 120 min |
+| 9 | Beginner | [Running Python, Shell, Bash, and CMD in Workflows](modules/module-09-running-scripts.md) | 90 min |
+| 10 | Beginner | [Artifacts — Uploading Files, Folders, Retention, and Conditions](modules/module-10-artifacts.md) | 120 min |
+| 11 | Intermediate | [Essential Workflow Controls — Concurrency, Permissions, Defaults, and More](modules/module-11-misc-features.md) | 120 min |
+| 12 | Beginner | [Workflow Syntax, Jobs, Steps, and Expressions](modules/module-12-workflow-syntax.md) | 120 min |
+| 13 | Beginner | [Secrets, Variables, and Secure Pipelines](modules/module-13-secrets-security.md) | 120 min |
+| 14 | Intermediate | [Matrix Builds, Marketplace Actions, and Reusable Workflows](modules/module-14-matrix-and-reuse.md) | 120 min |
+| 15 | Intermediate | [Automated Testing Pipelines](modules/module-15-multi-language-tests.md) | 120 min |
+| 16 | Intermediate | [Docker, Artifacts, Caching, and Performance](modules/module-16-docker-performance.md) | 150 min |
+| 17 | Intermediate | [Deployment, Versioning, Tagging, and Release Automation](modules/module-17-release-automation.md) | 150 min |
+| 18 | Advanced | [QA Automation Workflows](modules/module-18-qa-automation.md) | 150 min |
+| 19 | Advanced | [Monorepos, Enterprise Patterns, and Self-Hosted Runners](modules/module-19-monorepo-best-practices.md) | 150 min |
+| 20 | Advanced | [Notifications, Observability, Debugging, and Governance](modules/module-20-notifications.md) | 120 min |
 
 ---
 

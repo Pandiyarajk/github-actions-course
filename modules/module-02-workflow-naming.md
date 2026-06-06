@@ -1,7 +1,7 @@
-# Module 14: Naming Workflows with `name` and Dynamic `run-name`
+# Module 2: Naming Workflows with `name` and Dynamic `run-name`
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 13](./module-13-workflow-triggers.md) | [Next: Module 15](./module-15-jobs-and-steps.md)
-> Level: **Beginner** | Time: **90 min** | Example workflow: [`module-14-workflow-naming.yml`](../examples/module-14-workflow-naming.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 1](./module-01-ci-foundations.md) | [Next: Module 3](./module-03-workflow-triggers.md)
+> Level: **Beginner** | Time: **90 min** | Example workflow: [`module-02-workflow-naming.yml`](../examples/module-02-workflow-naming.yml)
 
 ## Learning Objectives
 
@@ -97,7 +97,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example sets `name: Smoke Tests` and a dynamic `run-name` that differs for scheduled vs manual runs. See [`module-14-workflow-naming.yml`](../examples/module-14-workflow-naming.yml).
+The full example sets `name: Smoke Tests` and a dynamic `run-name` that differs for scheduled vs manual runs. See [`module-02-workflow-naming.yml`](../examples/module-02-workflow-naming.yml).
 
 ### Schedule vs Manual Title
 
@@ -168,4 +168,4 @@ Use `>-` for multi-line `run-name` expressions so the title has no trailing blan
 
 ---
 
-[Previous: Module 13](./module-13-workflow-triggers.md) | [Module Index](./README.md) | [Next: Module 15](./module-15-jobs-and-steps.md)
+[Previous: Module 1](./module-01-ci-foundations.md) | [Module Index](./README.md) | [Next: Module 3](./module-03-workflow-triggers.md)

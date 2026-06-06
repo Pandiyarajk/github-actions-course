@@ -1,7 +1,7 @@
-# Module 12: Scheduling Workflow Runs with Cron
+# Module 4: Scheduling Workflow Runs with Cron
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 11](./module-11-running-scripts.md) | [Next: Module 13](./module-13-workflow-triggers.md)
-> Level: **Beginner** | Time: **90 min** | Example workflow: [`module-12-scheduled-workflows.yml`](../examples/module-12-scheduled-workflows.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 3](./module-03-workflow-triggers.md) | [Next: Module 5](./module-05-runners.md)
+> Level: **Beginner** | Time: **90 min** | Example workflow: [`module-04-scheduled-workflows.yml`](../examples/module-04-scheduled-workflows.yml)
 
 ## Learning Objectives
 
@@ -114,7 +114,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example declares every cadence in one workflow and branches on the cron that fired. See [`module-12-scheduled-workflows.yml`](../examples/module-12-scheduled-workflows.yml).
+The full example declares every cadence in one workflow and branches on the cron that fired. See [`module-04-scheduled-workflows.yml`](../examples/module-04-scheduled-workflows.yml).
 
 ```yaml
 on:
@@ -170,4 +170,4 @@ GitHub uses UTC. Convert before committing:
 
 ---
 
-[Previous: Module 11](./module-11-running-scripts.md) | [Module Index](./README.md) | [Next: Module 13](./module-13-workflow-triggers.md)
+[Previous: Module 3](./module-03-workflow-triggers.md) | [Module Index](./README.md) | [Next: Module 5](./module-05-runners.md)

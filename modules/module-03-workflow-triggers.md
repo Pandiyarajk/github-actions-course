@@ -1,7 +1,7 @@
-# Module 13: The `on` Section — Workflow Triggers and Event Filters
+# Module 3: The `on` Section — Workflow Triggers and Event Filters
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 12](./module-12-scheduled-workflows.md) | [Next: Module 14](./module-14-workflow-naming.md)
-> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-13-workflow-triggers.yml`](../examples/module-13-workflow-triggers.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 2](./module-02-workflow-naming.md) | [Next: Module 4](./module-04-scheduled-workflows.md)
+> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-03-workflow-triggers.yml`](../examples/module-03-workflow-triggers.yml)
 
 ## Learning Objectives
 
@@ -125,7 +125,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example combines branch lifecycle, push, pull request, review, issue, schedule, and a rich manual-input form in one place. See [`module-13-workflow-triggers.yml`](../examples/module-13-workflow-triggers.yml).
+The full example combines branch lifecycle, push, pull request, review, issue, schedule, and a rich manual-input form in one place. See [`module-03-workflow-triggers.yml`](../examples/module-03-workflow-triggers.yml).
 
 ### Filter Push by Branch and Path
 
@@ -232,4 +232,4 @@ Read them in steps:
 
 ---
 
-[Previous: Module 12](./module-12-scheduled-workflows.md) | [Module Index](./README.md) | [Next: Module 14](./module-14-workflow-naming.md)
+[Previous: Module 2](./module-02-workflow-naming.md) | [Module Index](./README.md) | [Next: Module 4](./module-04-scheduled-workflows.md)

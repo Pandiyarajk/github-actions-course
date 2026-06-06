@@ -1,7 +1,7 @@
-# Module 20: Runner Setup — Creating, Targeting, and Health-Checking Runners
+# Module 6: Runner Setup — Creating, Targeting, and Health-Checking Runners
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 19](./module-19-runners.md) | [Next: Capstones](../capstones/README.md)
-> Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-20-runner-setup.yml`](../examples/module-20-runner-setup.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 5](./module-05-runners.md) | [Next: Module 7](./module-07-jobs-and-steps.md)
+> Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-06-runner-setup.yml`](../examples/module-06-runner-setup.yml)
 
 ## Learning Objectives
 
@@ -160,7 +160,7 @@ If a workflow targets a label but no matching runner is **Idle/Active**, the job
 
 ## Example Workflow
 
-The companion workflow inspects a hosted image and verifies a self-hosted runner answers. See [`module-20-runner-setup.yml`](../examples/module-20-runner-setup.yml).
+The companion workflow inspects a hosted image and verifies a self-hosted runner answers. See [`module-06-runner-setup.yml`](../examples/module-06-runner-setup.yml).
 
 ### Target a Hosted Image by Label
 
@@ -223,4 +223,4 @@ jobs:
 
 ---
 
-[Previous: Module 19](./module-19-runners.md) | [Module Index](./README.md) | [Next: Capstones](../capstones/README.md)
+[Previous: Module 5](./module-05-runners.md) | [Module Index](./README.md) | [Next: Module 7](./module-07-jobs-and-steps.md)

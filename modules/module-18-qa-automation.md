@@ -1,7 +1,7 @@
-# Module 8: QA Automation Workflows
+# Module 18: QA Automation Workflows
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 7](./module-07-release-automation.md) | [Next: Module 9](./module-09-monorepo-best-practices.md)
-> Level: **Advanced** | Time: **150 min** | Example workflow: [`module-08-qa-automation.yml`](../examples/module-08-qa-automation.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 17](./module-17-release-automation.md) | [Next: Module 19](./module-19-monorepo-best-practices.md)
+> Level: **Advanced** | Time: **150 min** | Example workflow: [`module-18-qa-automation.yml`](../examples/module-18-qa-automation.yml)
 
 ## Learning Objectives
 
@@ -331,4 +331,4 @@ Pin package versions for production workflows when reproducibility matters.
 
 ---
 
-[Previous: Module 7](./module-07-release-automation.md) | [Module Index](./README.md) | [Next: Module 9](./module-09-monorepo-best-practices.md)
+[Previous: Module 17](./module-17-release-automation.md) | [Module Index](./README.md) | [Next: Module 19](./module-19-monorepo-best-practices.md)

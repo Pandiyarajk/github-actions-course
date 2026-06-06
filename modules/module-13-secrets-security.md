@@ -1,7 +1,7 @@
-# Module 3: Secrets, Variables, and Secure Pipelines
+# Module 13: Secrets, Variables, and Secure Pipelines
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 2](./module-02-workflow-syntax.md) | [Next: Module 4](./module-04-matrix-and-reuse.md)
-> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-03-secrets-security.yml`](../examples/module-03-secrets-security.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 12](./module-12-workflow-syntax.md) | [Next: Module 14](./module-14-matrix-and-reuse.md)
+> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-13-secrets-security.yml`](../examples/module-13-secrets-security.yml)
 
 ## Learning Objectives
 
@@ -179,4 +179,4 @@ jobs:
 
 ---
 
-[Previous: Module 2](./module-02-workflow-syntax.md) | [Module Index](./README.md) | [Next: Module 4](./module-04-matrix-and-reuse.md)
+[Previous: Module 12](./module-12-workflow-syntax.md) | [Module Index](./README.md) | [Next: Module 14](./module-14-matrix-and-reuse.md)

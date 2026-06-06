@@ -1,7 +1,7 @@
-# Module 19: Runners — What They Are and How Concurrent Runs Behave
+# Module 5: Runners — What They Are and How Concurrent Runs Behave
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 18](./module-18-misc-features.md) | [Next: Module 20](./module-20-runner-setup.md)
-> Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-19-runners.yml`](../examples/module-19-runners.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 4](./module-04-scheduled-workflows.md) | [Next: Module 6](./module-06-runner-setup.md)
+> Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-05-runners.yml`](../examples/module-05-runners.yml)
 
 ## Learning Objectives
 
@@ -116,7 +116,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example shows runner identity, persistent vs fresh workspace, a serialized concurrency lane, and a matrix across runners. See [`module-19-runners.yml`](../examples/module-19-runners.yml).
+The full example shows runner identity, persistent vs fresh workspace, a serialized concurrency lane, and a matrix across runners. See [`module-05-runners.yml`](../examples/module-05-runners.yml).
 
 ### Selecting a Runner at Run Time
 
@@ -190,4 +190,4 @@ Each matrix copy runs on its own runner in parallel and shares nothing with the 
 
 ---
 
-[Previous: Module 18](./module-18-misc-features.md) | [Module Index](./README.md) | [Next: Module 20](./module-20-runner-setup.md)
+[Previous: Module 4](./module-04-scheduled-workflows.md) | [Module Index](./README.md) | [Next: Module 6](./module-06-runner-setup.md)

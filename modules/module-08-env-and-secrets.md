@@ -1,7 +1,7 @@
-# Module 16: Environment Variables and Secrets — Setting and Using Them
+# Module 8: Environment Variables and Secrets — Setting and Using Them
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 15](./module-15-jobs-and-steps.md) | [Next: Module 17](./module-17-artifacts.md)
-> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-16-env-and-secrets.yml`](../examples/module-16-env-and-secrets.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 7](./module-07-jobs-and-steps.md) | [Next: Module 9](./module-09-running-scripts.md)
+> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-08-env-and-secrets.yml`](../examples/module-08-env-and-secrets.yml)
 
 ## Learning Objectives
 
@@ -120,7 +120,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example shows secrets into env, dynamic `$GITHUB_ENV`, step outputs, and reading env across bash, PowerShell, and cmd. See [`module-16-env-and-secrets.yml`](../examples/module-16-env-and-secrets.yml).
+The full example shows secrets into env, dynamic `$GITHUB_ENV`, step outputs, and reading env across bash, PowerShell, and cmd. See [`module-08-env-and-secrets.yml`](../examples/module-08-env-and-secrets.yml).
 
 ### Call Secrets Into Env
 
@@ -211,4 +211,4 @@ Secrets are masked in logs. Assigning them to `env` is how scripts and tools rec
 
 ---
 
-[Previous: Module 15](./module-15-jobs-and-steps.md) | [Module Index](./README.md) | [Next: Module 17](./module-17-artifacts.md)
+[Previous: Module 7](./module-07-jobs-and-steps.md) | [Module Index](./README.md) | [Next: Module 9](./module-09-running-scripts.md)

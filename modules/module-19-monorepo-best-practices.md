@@ -1,7 +1,7 @@
-# Module 9: Monorepos, Enterprise Patterns, and Self-Hosted Runners
+# Module 19: Monorepos, Enterprise Patterns, and Self-Hosted Runners
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 8](./module-08-qa-automation.md) | [Next: Module 10](./module-10-notifications.md)
-> Level: **Advanced** | Time: **150 min** | Example workflow: [`module-09-monorepo-best-practices.yml`](../examples/module-09-monorepo-best-practices.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 18](./module-18-qa-automation.md) | [Next: Module 20](./module-20-notifications.md)
+> Level: **Advanced** | Time: **150 min** | Example workflow: [`module-19-monorepo-best-practices.yml`](../examples/module-19-monorepo-best-practices.yml)
 
 ## Learning Objectives
 
@@ -282,4 +282,4 @@ The `runner` choice input is interpolated into the `runs-on` label list, so the 
 
 ---
 
-[Previous: Module 8](./module-08-qa-automation.md) | [Module Index](./README.md) | [Next: Module 10](./module-10-notifications.md)
+[Previous: Module 18](./module-18-qa-automation.md) | [Module Index](./README.md) | [Next: Module 20](./module-20-notifications.md)

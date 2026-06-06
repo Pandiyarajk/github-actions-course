@@ -1,7 +1,7 @@
-# Module 6: Docker, Artifacts, Caching, and Performance
+# Module 16: Docker, Artifacts, Caching, and Performance
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 5](./module-05-multi-language-tests.md) | [Next: Module 7](./module-07-release-automation.md)
-> Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-06-docker-performance.yml`](../examples/module-06-docker-performance.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 15](./module-15-multi-language-tests.md) | [Next: Module 17](./module-17-release-automation.md)
+> Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-16-docker-performance.yml`](../examples/module-16-docker-performance.yml)
 
 ## Learning Objectives
 
@@ -182,4 +182,4 @@ jobs:
 
 ---
 
-[Previous: Module 5](./module-05-multi-language-tests.md) | [Module Index](./README.md) | [Next: Module 7](./module-07-release-automation.md)
+[Previous: Module 15](./module-15-multi-language-tests.md) | [Module Index](./README.md) | [Next: Module 17](./module-17-release-automation.md)

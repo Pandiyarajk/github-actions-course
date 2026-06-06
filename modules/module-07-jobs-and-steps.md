@@ -1,7 +1,7 @@
-# Module 15: Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`
+# Module 7: Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 14](./module-14-workflow-naming.md) | [Next: Module 16](./module-16-env-and-secrets.md)
-> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-15-jobs-and-steps.yml`](../examples/module-15-jobs-and-steps.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 6](./module-06-runner-setup.md) | [Next: Module 8](./module-08-env-and-secrets.md)
+> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-07-jobs-and-steps.yml`](../examples/module-07-jobs-and-steps.yml)
 
 ## Learning Objectives
 
@@ -103,7 +103,7 @@ jobs:
 
 ## Production Workflow Example
 
-The full example splits a fast analysis job and a long self-hosted BDD job, showing all three `env` scopes. See [`module-15-jobs-and-steps.yml`](../examples/module-15-jobs-and-steps.yml).
+The full example splits a fast analysis job and a long self-hosted BDD job, showing all three `env` scopes. See [`module-07-jobs-and-steps.yml`](../examples/module-07-jobs-and-steps.yml).
 
 ### Two Jobs with Names, Runners, and Timeouts
 
@@ -183,4 +183,4 @@ The most specific scope wins if the same variable name is defined more than once
 
 ---
 
-[Previous: Module 14](./module-14-workflow-naming.md) | [Module Index](./README.md) | [Next: Module 16](./module-16-env-and-secrets.md)
+[Previous: Module 6](./module-06-runner-setup.md) | [Module Index](./README.md) | [Next: Module 8](./module-08-env-and-secrets.md)

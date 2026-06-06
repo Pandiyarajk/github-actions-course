@@ -1,7 +1,7 @@
-# Module 7: Deployment, Versioning, Tagging, and Release Automation
+# Module 17: Deployment, Versioning, Tagging, and Release Automation
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 6](./module-06-docker-performance.md) | [Next: Module 8](./module-08-qa-automation.md)
-> Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-07-release-automation.yml`](../examples/module-07-release-automation.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 16](./module-16-docker-performance.md) | [Next: Module 18](./module-18-qa-automation.md)
+> Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-17-release-automation.yml`](../examples/module-17-release-automation.yml)
 
 ## Learning Objectives
 
@@ -195,4 +195,4 @@ jobs:
 
 ---
 
-[Previous: Module 6](./module-06-docker-performance.md) | [Module Index](./README.md) | [Next: Module 8](./module-08-qa-automation.md)
+[Previous: Module 16](./module-16-docker-performance.md) | [Module Index](./README.md) | [Next: Module 18](./module-18-qa-automation.md)

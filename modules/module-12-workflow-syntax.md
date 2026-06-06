@@ -1,7 +1,7 @@
-# Module 2: Workflow Syntax, Jobs, Steps, and Expressions
+# Module 12: Workflow Syntax, Jobs, Steps, and Expressions
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 1](./module-01-ci-foundations.md) | [Next: Module 3](./module-03-secrets-security.md)
-> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-02-syntax-and-expressions.yml`](../examples/module-02-syntax-and-expressions.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 11](./module-11-misc-features.md) | [Next: Module 13](./module-13-secrets-security.md)
+> Level: **Beginner** | Time: **120 min** | Example workflow: [`module-12-workflow-syntax.yml`](../examples/module-12-workflow-syntax.yml)
 
 ## Learning Objectives
 
@@ -277,4 +277,4 @@ The summary supports Markdown, so tables, bullet lists, links, and short report 
 
 ---
 
-[Previous: Module 1](./module-01-ci-foundations.md) | [Module Index](./README.md) | [Next: Module 3](./module-03-secrets-security.md)
+[Previous: Module 11](./module-11-misc-features.md) | [Module Index](./README.md) | [Next: Module 13](./module-13-secrets-security.md)

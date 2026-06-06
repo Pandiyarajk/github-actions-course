@@ -1,7 +1,7 @@
-# Module 5: Automated Testing Pipelines
+# Module 15: Automated Testing Pipelines
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 4](./module-04-matrix-and-reuse.md) | [Next: Module 6](./module-06-docker-performance.md)
-> Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-05-multi-language-tests.yml`](../examples/module-05-multi-language-tests.yml)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 14](./module-14-matrix-and-reuse.md) | [Next: Module 16](./module-16-docker-performance.md)
+> Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-15-multi-language-tests.yml`](../examples/module-15-multi-language-tests.yml)
 
 ## Learning Objectives
 
@@ -202,4 +202,4 @@ jobs:
 
 ---
 
-[Previous: Module 4](./module-04-matrix-and-reuse.md) | [Module Index](./README.md) | [Next: Module 6](./module-06-docker-performance.md)
+[Previous: Module 14](./module-14-matrix-and-reuse.md) | [Module Index](./README.md) | [Next: Module 16](./module-16-docker-performance.md)
