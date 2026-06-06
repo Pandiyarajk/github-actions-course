@@ -1,5 +1,7 @@
 # Module 2: Naming Workflows with `name` and Dynamic `run-name`
 
+![Module](https://img.shields.io/badge/Module-2-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-90%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 1](./module-01-ci-foundations.md) | [Next: Module 3](./module-03-workflow-triggers.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-02-workflow-naming.yml`](../examples/module-02-workflow-naming.yml)
 

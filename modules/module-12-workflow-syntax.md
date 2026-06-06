@@ -1,5 +1,7 @@
 # Module 12: Workflow Syntax, Jobs, Steps, and Expressions
 
+![Module](https://img.shields.io/badge/Module-12-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 11](./module-11-misc-features.md) | [Next: Module 13](./module-13-secrets-security.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-12-workflow-syntax.yml`](../examples/module-12-workflow-syntax.yml)
 

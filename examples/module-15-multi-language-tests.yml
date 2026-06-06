@@ -1,5 +1,5 @@
-# Module 5: Multi-layer test quality portal — Python BDD + static analysis + API
-name: module-05-multi-language-tests
+# Module 15: Multi-layer test quality portal — Python BDD + static analysis + API
+name: module-15-multi-language-tests
 on:
   push:
     branches:

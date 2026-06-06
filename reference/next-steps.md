@@ -1,4 +1,6 @@
-# What You Can Build Next
+# 🚀 What You Can Build Next
+
+![Section](https://img.shields.io/badge/Section-Next%20Steps-2da44e?style=flat-square) ![Use](https://img.shields.io/badge/Use-Project%20Ideas-1f6feb?style=flat-square) [![Reference Library](https://img.shields.io/badge/⬅%20Reference-555?style=flat-square)](README.md) [![Course Home](https://img.shields.io/badge/⬅%20Course%20Home-555?style=flat-square)](../README.md)
 
 - Preview environments for pull requests.
 - CodeQL and dependency review workflows.

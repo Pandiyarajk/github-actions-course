@@ -1,5 +1,5 @@
-# Module 6: Selenium Grid via Docker Compose + Allure report caching
-name: module-06-docker-performance
+# Module 16: Selenium Grid via Docker Compose + Allure report caching
+name: module-16-docker-performance
 on:
   push:
     paths:

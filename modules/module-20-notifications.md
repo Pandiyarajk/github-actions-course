@@ -1,5 +1,7 @@
 # Module 20: Notifications, Observability, Debugging, and Governance
 
+![Module](https://img.shields.io/badge/Module-20-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Advanced-cf222e?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 19](./module-19-monorepo-best-practices.md) | [Next: Capstones](../capstones/README.md)
 > Level: **Advanced** | Time: **120 min** | Example workflow: [`module-20-notifications.yml`](../examples/module-20-notifications.yml)
 

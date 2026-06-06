@@ -1,18 +1,27 @@
-# Capstone Projects
+# 🏆 Capstone Projects
 
-### Capstone 1: Cross-Language Service Pipeline
+![Section](https://img.shields.io/badge/Section-Capstone-cf222e?style=flat-square) ![Projects](https://img.shields.io/badge/Projects-3-1f6feb?style=flat-square) ![Prereq](https://img.shields.io/badge/Prereq-Modules%201--20-d29922?style=flat-square) [![Course Home](https://img.shields.io/badge/⬅%20Course%20Home-555?style=flat-square)](../README.md)
 
-Build a monorepo pipeline for a Python API, React frontend, C# worker, Docker deployment, staging, production, release tagging, and notifications.
+Each capstone applies the modules end-to-end. Start small: build the **minimum viable** version first (it is enough to submit), then add the full-scope extras if you have time. Every capstone lists the modules it builds on so you can review them first.
+
+### Capstone 1: Multi-Service Python Pipeline
+
+Build a monorepo pipeline for several Python services with path-based test selection, Docker build, staging, production approval, release tagging, and notifications.
+
+**Before you start:** review Modules 7 (jobs/steps), 14 (matrix & reuse), 16 (Docker & caching), 17 (release automation), 19 (monorepo path filtering), 20 (notifications).
+
+**Minimum viable:** path detection + one Python test job + a Docker build on `main`.
+**Full scope:** all three services tested in parallel, staging→approval→production, release tag, and email notification.
 
 ```text
 Pull Request
    |
    v
-Path Detection
+Path Detection (api / worker / lib)
    |
-   +--> Python Tests
-   +--> React Tests
-   +--> C# Tests
+   +--> api tests (behave/pytest)
+   +--> worker tests
+   +--> lib tests
    |
    v
 Docker Build -> Security Scan -> Staging Deploy -> Approval -> Production Deploy
@@ -23,9 +32,9 @@ Release + Email Notification
 
 Implementation plan:
 
-1. Create `api/`, `frontend/`, and `worker/` folders.
-2. Add separate test jobs for each component.
-3. Add matrix builds where useful.
+1. Create `api/`, `worker/`, and `lib/` folders (all Python).
+2. Add separate test jobs for each service, selected by `dorny/paths-filter`.
+3. Add a matrix where useful (e.g. Python version or browser).
 4. Build a Docker image after tests pass.
 5. Push image to GHCR only from `main`.
 6. Add staging deployment using GitHub Environments.
@@ -43,8 +52,8 @@ Sample solution structure:
     docker-publish.yml
     deploy.yml
 api/
-frontend/
 worker/
+lib/
 docs/
   runbook.md
 ```
@@ -53,7 +62,7 @@ Evaluation checklist:
 
 | Area | Criteria |
 | --- | --- |
-| CI correctness | Tests run for all components. |
+| CI correctness | Tests run for each changed Python service. |
 | Security | Secrets are scoped; permissions are minimal. |
 | Deployment | Staging and production are separated. |
 | Release | Tags or releases are created consistently. |
@@ -63,6 +72,11 @@ Evaluation checklist:
 ### Capstone 2: Unified QA Automation Hub
 
 Build a QA pipeline that runs API, UI, and smoke tests and publishes evidence for audit and debugging.
+
+**Before you start:** review Modules 10 (artifacts), 15 (testing pipelines), 18 (QA automation), 20 (notifications).
+
+**Minimum viable:** one scheduled Behave smoke job that uploads an Allure report artifact.
+**Full scope:** parallel API/UI/smoke jobs, screenshots on failure, step summary, and a failure-only email.
 
 ```text
 Schedule / Manual Trigger
@@ -112,7 +126,7 @@ Evaluation checklist:
 
 | Area | Criteria |
 | --- | --- |
-| Test coverage | API, UI, and contract jobs exist. |
+| Test coverage | API, UI, and smoke jobs exist. |
 | Evidence | Reports and screenshots upload on failure. |
 | Scheduling | Nightly and manual triggers work. |
 | Debugging | Logs clearly identify failed suite. |
@@ -121,6 +135,11 @@ Evaluation checklist:
 ### Capstone 3: Secure Deployment Playbook
 
 Create a secure cloud deployment workflow using OIDC, Terraform plan/apply, approvals, release notes, and rollback.
+
+**Before you start:** review Modules 13 (secure pipelines) and 17 (release automation), plus the [advanced OIDC reusables](../advanced/README.md).
+
+**Minimum viable:** an OIDC-authenticated job that runs `terraform plan` and uploads the plan artifact.
+**Full scope:** plan→approval→apply, release notes, retained evidence, and a runnable rollback workflow.
 
 ```text
 Push to Main -> Build Artifact -> Terraform Plan -> Security Scan

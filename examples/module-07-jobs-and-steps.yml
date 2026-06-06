@@ -1,4 +1,4 @@
-# Module 15: Jobs, job naming, timeout-minutes, runs-on, env, and steps
+# Module 7: Jobs, job naming, timeout-minutes, runs-on, env, and steps
 #
 # A workflow contains one or more jobs. Each job:
 #   - has an ID (the YAML key) and an optional display "name"
@@ -9,7 +9,7 @@
 #
 # This mirrors the real QA automation layout: a quick static-analysis job on a
 # GitHub-hosted runner, then a long BDD job on a self-hosted server.
-name: module-15-jobs-and-steps
+name: module-07-jobs-and-steps
 run-name: Jobs & Steps - ${{ github.ref_name }}
 
 on:

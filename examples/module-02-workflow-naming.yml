@@ -1,4 +1,4 @@
-# Module 14: Naming workflows with "name" and dynamic "run-name"
+# Module 2: Naming workflows with "name" and dynamic "run-name"
 #
 # name      -> the STATIC workflow name shown in the Actions sidebar/list.
 # run-name  -> the title of each INDIVIDUAL run, can be built from expressions

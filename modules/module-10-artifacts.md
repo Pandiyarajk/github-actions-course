@@ -1,5 +1,7 @@
 # Module 10: Artifacts — Uploading Files, Folders, Retention, and Conditions
 
+![Module](https://img.shields.io/badge/Module-10-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 9](./module-09-running-scripts.md) | [Next: Module 11](./module-11-misc-features.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-10-artifacts.yml`](../examples/module-10-artifacts.yml)
 

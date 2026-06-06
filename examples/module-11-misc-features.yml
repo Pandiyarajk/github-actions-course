@@ -1,4 +1,4 @@
-# Module 18: Misc but essential workflow features
+# Module 11: Misc but essential workflow features
 #
 # A grab-bag of controls you reach for in real workflows:
 #   - concurrency (cancel or queue overlapping runs)
@@ -10,7 +10,7 @@
 #   - matrix fail-fast / max-parallel
 #   - environment (deployment gates)
 #   - timeout-minutes at job and step level
-name: module-18-misc-features
+name: module-11-misc-features
 run-name: Misc Features - ${{ github.ref_name }}
 
 on:

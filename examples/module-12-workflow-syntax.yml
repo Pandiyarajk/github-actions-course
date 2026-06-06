@@ -1,5 +1,5 @@
-# Module 2: Job relationships, expressions, and outputs — Python BDD pipeline
-name: module-02-syntax-and-expressions
+# Module 12: Job relationships, expressions, and outputs — Python BDD pipeline
+name: module-12-workflow-syntax
 on:
   pull_request:
     types: [opened, synchronize]

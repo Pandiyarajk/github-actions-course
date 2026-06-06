@@ -1,5 +1,7 @@
 # Module 4: Scheduling Workflow Runs with Cron
 
+![Module](https://img.shields.io/badge/Module-4-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-90%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 3](./module-03-workflow-triggers.md) | [Next: Module 5](./module-05-runners.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-04-scheduled-workflows.yml`](../examples/module-04-scheduled-workflows.yml)
 

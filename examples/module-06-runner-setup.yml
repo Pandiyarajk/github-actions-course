@@ -1,9 +1,9 @@
-# Module 20: Runner setup, labels, versions, and health checks
+# Module 6: Runner setup, labels, versions, and health checks
 #
 # This workflow does NOT install a runner (that is done on the machine — see
 # the module). It demonstrates how to TARGET runner labels/versions and how to
 # inspect the runner image and verify a self-hosted runner is alive.
-name: module-20-runner-setup
+name: module-06-runner-setup
 run-name: Runner Setup - ${{ inputs.runner_label || 'ubuntu-latest' }}
 
 on:

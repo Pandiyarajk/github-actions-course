@@ -1,5 +1,5 @@
-# Module 9: Path-filtered workflow — only run tests for changed BDD feature areas
-name: module-09-monorepo-best-practices
+# Module 19: Path-filtered workflow — only run tests for changed BDD feature areas
+name: module-19-monorepo-best-practices
 on:
   pull_request:
     paths:

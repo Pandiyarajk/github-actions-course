@@ -1,5 +1,7 @@
 # Module 7: Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`
 
+![Module](https://img.shields.io/badge/Module-7-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 6](./module-06-runner-setup.md) | [Next: Module 8](./module-08-env-and-secrets.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-07-jobs-and-steps.yml`](../examples/module-07-jobs-and-steps.yml)
 

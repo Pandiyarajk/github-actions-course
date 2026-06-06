@@ -1,6 +1,8 @@
 # Self-Hosted QA Regression Workflows
 
-> Level: **Advanced** | Suggested modules: **Module 8, Module 9**
+![Case Study](https://img.shields.io/badge/Case%20Study-2-1f6feb?style=flat-square) ![Difficulty](https://img.shields.io/badge/Difficulty-%E2%98%85%E2%98%85-cf222e?style=flat-square) ![Level](https://img.shields.io/badge/Level-Advanced-cf222e?style=flat-square) [![Case Studies](https://img.shields.io/badge/%E2%AC%85%20Case%20Studies-555?style=flat-square)](README.md)
+
+> Level: **Advanced** | Suggested modules: **Module 5, Module 6, Module 18**
 
 ## 1. Title
 
@@ -146,19 +148,16 @@ jobs:
           ./scripts/stop-test-processes.ps1
           New-Item -ItemType Directory -Force reports | Out-Null
 
+      # The helper picks the test IDs: failed-tests.json (rerun), else the
+      # chosen batch file, else empty = run the full suite. It writes
+      # `test_ids` to the step output so the next two steps can branch on it.
       - name: Resolve test IDs
         id: tests
         shell: pwsh
         run: |
-          if ("${{ inputs.rerun_failures }}" -eq "true" -and (Test-Path "failures/failed-tests.json")) {
-            $ids = Get-Content "failures/failed-tests.json" -Raw | ConvertFrom-Json
-            "test_ids=$($ids -join ',')" >> $env:GITHUB_OUTPUT
-          } elseif ("${{ inputs.batch_file }}") {
-            $ids = Get-Content ".github/test-batches/${{ inputs.batch_file }}.json" -Raw | ConvertFrom-Json
-            "test_ids=$($ids -join ',')" >> $env:GITHUB_OUTPUT
-          } else {
-            "test_ids=" >> $env:GITHUB_OUTPUT
-          }
+          ./scripts/resolve-test-ids.ps1 `
+            -RerunFailures "${{ inputs.rerun_failures }}" `
+            -BatchFile "${{ inputs.batch_file }}"
 
       - name: Run selected tests
         if: steps.tests.outputs.test_ids != ''

@@ -1,5 +1,7 @@
 # Module 14: Matrix Builds, Marketplace Actions, and Reusable Workflows
 
+![Module](https://img.shields.io/badge/Module-14-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Intermediate-d29922?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 13](./module-13-secrets-security.md) | [Next: Module 15](./module-15-multi-language-tests.md)
 > Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-14-matrix-and-reuse.yml`](../examples/module-14-matrix-and-reuse.yml)
 

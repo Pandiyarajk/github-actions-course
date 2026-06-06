@@ -1,5 +1,7 @@
 # Module 9: Running Python, Shell, Bash, and CMD in Workflows
 
+![Module](https://img.shields.io/badge/Module-9-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-90%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 8](./module-08-env-and-secrets.md) | [Next: Module 10](./module-10-artifacts.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-09-running-scripts.yml`](../examples/module-09-running-scripts.yml)
 

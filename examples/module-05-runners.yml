@@ -1,4 +1,4 @@
-# Module 19: Runners — what they are and how concurrent runs behave
+# Module 5: Runners — what they are and how concurrent runs behave
 #
 # A "runner" is the machine that executes a job. Two kinds:
 #   - GitHub-hosted: fresh VM per job (ubuntu-latest, windows-latest, ...)
@@ -6,7 +6,7 @@
 #
 # This example shows runner identity, what differs across runners, and what
 # happens when the same workflow is triggered many times.
-name: module-19-runners
+name: module-05-runners
 run-name: Runners - ${{ inputs.runner || 'ubuntu-latest' }} | run ${{ github.run_number }}
 
 on:

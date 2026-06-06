@@ -1,4 +1,6 @@
-# Assessments and Skill Checklist
+# ✅ Assessments and Skill Checklist
+
+![Section](https://img.shields.io/badge/Section-Assessment-2da44e?style=flat-square) ![Type](https://img.shields.io/badge/Type-Checklist%20%2B%20Checkpoint-1f6feb?style=flat-square) [![Course Home](https://img.shields.io/badge/⬅%20Course%20Home-555?style=flat-square)](../README.md)
 
 Learners should be able to:
 
@@ -15,31 +17,37 @@ Learners should be able to:
 
 ## Skill Checklist
 
-### Beginner
+The checklist mirrors the two halves of the course, then a mastery tier.
+
+### Part A — Workflow Components (Modules 1-11)
 
 - [ ] I can explain workflows, jobs, steps, and runners.
 - [ ] I can create a workflow in `.github/workflows/`.
-- [ ] I can trigger workflows on push, pull request, and manually.
-- [ ] I can read workflow logs.
-- [ ] I can use repository secrets safely.
+- [ ] I can name runs dynamically with `run-name`.
+- [ ] I can trigger workflows on push, pull request, schedule, and manually.
+- [ ] I can choose and target a runner (GitHub-hosted or self-hosted).
+- [ ] I can split work into jobs with `runs-on`, `timeout-minutes`, and steps.
+- [ ] I can set env variables and use repository secrets safely.
+- [ ] I can run Python, shell, and other commands in a step.
+- [ ] I can upload artifacts (including `if: always()`).
+- [ ] I can apply core controls: concurrency, permissions, defaults.
 
-### Intermediate
+### Part B — Applied CI/CD (Modules 12-20)
 
-- [ ] I can use matrix builds.
-- [ ] I can split pipelines into multiple jobs.
-- [ ] I can upload and download artifacts.
-- [ ] I can cache dependencies.
-- [ ] I can build Docker images.
-- [ ] I can create reusable workflows.
-- [ ] I can automate releases.
+- [ ] I can use expressions, conditionals, and job outputs.
+- [ ] I can build a secure pipeline with scoped permissions.
+- [ ] I can use matrix builds and reusable workflows.
+- [ ] I can build a multi-layer test pipeline and produce QA evidence.
+- [ ] I can build Docker images and cache dependencies.
+- [ ] I can automate releases with tags and artifacts.
+- [ ] I can use path filtering in a monorepo.
+- [ ] I can send notifications and write run summaries.
 
-### Advanced
+### Mastery (Capstone + advanced)
 
 - [ ] I can design deployment workflows with approvals.
 - [ ] I can use OIDC for cloud authentication.
 - [ ] I can configure self-hosted runners safely.
-- [ ] I can optimize slow workflows.
-- [ ] I can create QA evidence pipelines.
 - [ ] I can apply security hardening.
 - [ ] I can debug complex workflow failures.
 - [ ] I can design enterprise workflow standards.
@@ -48,7 +56,7 @@ Learners should be able to:
 
 ## Mid-Course Checkpoint
 
-Create a pull request workflow that demonstrates Modules 1-5:
+Create a pull request workflow that demonstrates Part A (Modules 1-11) — in particular triggers (Module 3), jobs and steps (Module 7), running a test command (Module 9), artifacts (Module 10), and a basic expression (Module 12):
 
 - Runs on `pull_request`.
 - Uses at least two jobs.

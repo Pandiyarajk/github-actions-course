@@ -1,6 +1,8 @@
 # AI-Assisted Pull Request Review
 
-> Level: **Advanced** | Suggested module: **Module 10**
+![Case Study](https://img.shields.io/badge/Case%20Study-5-1f6feb?style=flat-square) ![Difficulty](https://img.shields.io/badge/Difficulty-%E2%98%85-cf222e?style=flat-square) ![Level](https://img.shields.io/badge/Level-Advanced-cf222e?style=flat-square) [![Case Studies](https://img.shields.io/badge/%E2%AC%85%20Case%20Studies-555?style=flat-square)](README.md)
+
+> Level: **Advanced** | Suggested modules: **Module 3, Module 20**
 
 ## 1. Title
 
@@ -150,6 +152,7 @@ jobs:
 - `fetch-depth: 0` gives review scripts enough history for comparisons.
 - The PR resolution step exits safely when the branch has no open PR.
 - The diff is saved to `pr.diff` for traceability and debugging.
+- `[ ! -s pr.diff ]` tests whether `pr.diff` is empty (`-s` = "size greater than zero"); if so the step exits early instead of calling the review service with nothing.
 - `API_TOKEN` represents a generic external review service credential.
 - `--max-comments 10` limits review noise.
 - The debug artifact should be used during development and removed or restricted if diffs are sensitive.

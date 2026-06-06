@@ -1,5 +1,7 @@
 # Module 16: Docker, Artifacts, Caching, and Performance
 
+![Module](https://img.shields.io/badge/Module-16-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Intermediate-d29922?style=flat-square) ![Time](https://img.shields.io/badge/Time-150%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 15](./module-15-multi-language-tests.md) | [Next: Module 17](./module-17-release-automation.md)
 > Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-16-docker-performance.yml`](../examples/module-16-docker-performance.yml)
 

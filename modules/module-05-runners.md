@@ -1,5 +1,7 @@
 # Module 5: Runners — What They Are and How Concurrent Runs Behave
 
+![Module](https://img.shields.io/badge/Module-5-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Intermediate-d29922?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 4](./module-04-scheduled-workflows.md) | [Next: Module 6](./module-06-runner-setup.md)
 > Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-05-runners.yml`](../examples/module-05-runners.yml)
 

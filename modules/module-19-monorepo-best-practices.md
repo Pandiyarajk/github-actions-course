@@ -1,5 +1,7 @@
 # Module 19: Monorepos, Enterprise Patterns, and Self-Hosted Runners
 
+![Module](https://img.shields.io/badge/Module-19-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Advanced-cf222e?style=flat-square) ![Time](https://img.shields.io/badge/Time-150%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 18](./module-18-qa-automation.md) | [Next: Module 20](./module-20-notifications.md)
 > Level: **Advanced** | Time: **150 min** | Example workflow: [`module-19-monorepo-best-practices.yml`](../examples/module-19-monorepo-best-practices.yml)
 

@@ -1,5 +1,7 @@
 # Module 6: Runner Setup — Creating, Targeting, and Health-Checking Runners
 
+![Module](https://img.shields.io/badge/Module-6-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Intermediate-d29922?style=flat-square) ![Time](https://img.shields.io/badge/Time-150%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 5](./module-05-runners.md) | [Next: Module 7](./module-07-jobs-and-steps.md)
 > Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-06-runner-setup.yml`](../examples/module-06-runner-setup.yml)
 

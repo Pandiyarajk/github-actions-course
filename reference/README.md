@@ -1,4 +1,6 @@
-# Reference Library
+# 📑 Reference Library
+
+![Section](https://img.shields.io/badge/Section-Reference-8957e5?style=flat-square) ![Type](https://img.shields.io/badge/Type-Cheat%20Sheets%20%2B%20Checklists-1f6feb?style=flat-square) [![Course Home](https://img.shields.io/badge/⬅%20Course%20Home-555?style=flat-square)](../README.md)
 
 Use these pages when you need quick answers, production checklists, or advanced examples while working through the modules.
 

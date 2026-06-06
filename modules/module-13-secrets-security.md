@@ -1,5 +1,7 @@
 # Module 13: Secrets, Variables, and Secure Pipelines
 
+![Module](https://img.shields.io/badge/Module-13-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 12](./module-12-workflow-syntax.md) | [Next: Module 14](./module-14-matrix-and-reuse.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-13-secrets-security.yml`](../examples/module-13-secrets-security.yml)
 

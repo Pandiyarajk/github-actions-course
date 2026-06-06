@@ -1,5 +1,5 @@
-# Module 4: Matrix fan-out across browsers — Selenium BDD automation
-name: module-04-matrix-and-reuse
+# Module 14: Matrix fan-out across browsers — Selenium BDD automation
+name: module-14-matrix-and-reuse
 on:
   pull_request:
   workflow_dispatch:

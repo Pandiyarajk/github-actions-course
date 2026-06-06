@@ -1,4 +1,6 @@
-# Reference Cheat Sheet
+# 📋 Reference Cheat Sheet
+
+![Section](https://img.shields.io/badge/Section-Cheat%20Sheet-8957e5?style=flat-square) ![Use](https://img.shields.io/badge/Use-Quick%20Reference-1f6feb?style=flat-square) [![Reference Library](https://img.shields.io/badge/⬅%20Reference-555?style=flat-square)](README.md) [![Course Home](https://img.shields.io/badge/⬅%20Course%20Home-555?style=flat-square)](../README.md)
 
 ### Common Triggers
 

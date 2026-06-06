@@ -1,5 +1,7 @@
 # Module 18: QA Automation Workflows
 
+![Module](https://img.shields.io/badge/Module-18-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Advanced-cf222e?style=flat-square) ![Time](https://img.shields.io/badge/Time-150%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 17](./module-17-release-automation.md) | [Next: Module 19](./module-19-monorepo-best-practices.md)
 > Level: **Advanced** | Time: **150 min** | Example workflow: [`module-18-qa-automation.yml`](../examples/module-18-qa-automation.yml)
 

@@ -1,6 +1,8 @@
-# Advanced Topics and Workflow Library
+# 🧩 Advanced Topics and Workflow Library
 
-Need scenarios beyond the core ten modules? Browse the [`../advanced/`](../advanced/README.md) directory for production-grade references you can copy into `.github/workflows/`.
+![Section](https://img.shields.io/badge/Section-Advanced%20Topics-cf222e?style=flat-square) ![Topics](https://img.shields.io/badge/Topics-Reusables%20·%20OIDC%20·%20Security-1f6feb?style=flat-square) [![Reference Library](https://img.shields.io/badge/⬅%20Reference-555?style=flat-square)](README.md) [![Course Home](https://img.shields.io/badge/⬅%20Course%20Home-555?style=flat-square)](../README.md)
+
+Need scenarios beyond the 20 core modules? Browse the [`../advanced/`](../advanced/README.md) directory for production-grade references you can copy into `.github/workflows/`.
 
 | Scenario | Workflow | Highlights |
 | --- | --- | --- |

@@ -1,4 +1,4 @@
-# Module 11: Running scripts and commands in workflows
+# Module 9: Running scripts and commands in workflows
 # Shows every common way to execute logic in a step:
 #   - a Python .py file on disk
 #   - inline Python (heredoc and python -c)
@@ -6,7 +6,7 @@
 #   - inline bash commands
 #   - Windows cmd commands
 #   - PowerShell commands
-name: module-11-running-scripts
+name: module-09-running-scripts
 on:
   workflow_dispatch:
     inputs:

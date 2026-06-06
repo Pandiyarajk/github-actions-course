@@ -1,5 +1,7 @@
 # Module 3: The `on` Section — Workflow Triggers and Event Filters
 
+![Module](https://img.shields.io/badge/Module-3-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 2](./module-02-workflow-naming.md) | [Next: Module 4](./module-04-scheduled-workflows.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-03-workflow-triggers.yml`](../examples/module-03-workflow-triggers.yml)
 

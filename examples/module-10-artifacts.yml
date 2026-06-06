@@ -1,4 +1,4 @@
-# Module 17: Artifacts — uploading files, folders, retention, and conditions
+# Module 10: Artifacts — uploading files, folders, retention, and conditions
 #
 # Artifacts let a workflow save files (reports, screenshots, logs) so you can
 # download them after the run, or pass them to another job.
@@ -10,7 +10,7 @@
 #   - if: success() vs if: always() vs if: failure()
 #   - multiple upload steps in one job
 #   - compression level and missing-file handling
-name: module-17-artifacts
+name: module-10-artifacts
 run-name: Artifacts - ${{ github.ref_name }}
 
 on:

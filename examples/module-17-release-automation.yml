@@ -1,5 +1,5 @@
-# Module 7: Staged release with Zephyr test cycle creation and approvals
-name: module-07-release-automation
+# Module 17: Staged release with Zephyr test cycle creation and approvals
+name: module-17-release-automation
 on:
   push:
     branches: [main]

@@ -1,6 +1,8 @@
 # Pull Request and Branch Lifecycle Automation
 
-> Level: **Advanced** | Suggested modules: **Module 9, Module 10**
+![Case Study](https://img.shields.io/badge/Case%20Study-3-1f6feb?style=flat-square) ![Difficulty](https://img.shields.io/badge/Difficulty-%E2%98%85%E2%98%85-cf222e?style=flat-square) ![Level](https://img.shields.io/badge/Level-Advanced-cf222e?style=flat-square) [![Case Studies](https://img.shields.io/badge/%E2%AC%85%20Case%20Studies-555?style=flat-square)](README.md)
+
+> Level: **Advanced** | Suggested modules: **Module 3, Module 19**
 
 ## 1. Title
 
@@ -69,6 +71,14 @@ jobs:
 ```
 
 ## 7. Production Version YAML
+
+Different events expose the branch/ref under different context variables, which is why the workflow below reads `github.head_ref || github.ref_name || github.event.ref` — it takes the first one that is set for the current event:
+
+| Event | Where the ref is | Example value |
+| --- | --- | --- |
+| `pull_request` | `github.head_ref` | the PR's source branch |
+| `push` | `github.ref_name` | the pushed branch |
+| `create` / `delete` | `github.event.ref` | the created/deleted branch or tag |
 
 ```yaml
 name: Generic Lifecycle Automation

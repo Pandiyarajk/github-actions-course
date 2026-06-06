@@ -1,4 +1,6 @@
-# Module Study Guide
+# 📘 Module Study Guide
+
+![Modules](https://img.shields.io/badge/Modules-20-2da44e?style=flat-square) ![Part A](https://img.shields.io/badge/Part%20A-Components%201--11-1f6feb?style=flat-square) ![Part B](https://img.shields.io/badge/Part%20B-Applied%2012--20-8957e5?style=flat-square) [![Course Home](https://img.shields.io/badge/⬅%20Course%20Home-555?style=flat-square)](../README.md)
 
 Use this directory as the main study path. Each module is self-contained and includes objectives, ELI5 and technical explanations, real-world use cases, when to use and avoid the pattern, common mistakes, debugging tips, minimal YAML, production YAML, execution flow, labs, and expected outputs.
 

@@ -1,5 +1,7 @@
 # Module 1: CI/CD and GitHub Actions Foundations
 
+![Module](https://img.shields.io/badge/Module-1-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-90%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | Previous: none | [Next: Module 2](./module-02-workflow-naming.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-01-ci-foundations.yml`](../examples/module-01-ci-foundations.yml)
 

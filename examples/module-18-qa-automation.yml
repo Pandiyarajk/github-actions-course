@@ -1,5 +1,5 @@
-# Module 8: API health-check -> BDD UI automation chain with Allure reporting
-name: module-08-qa-automation
+# Module 18: API health-check -> BDD UI automation chain with Allure reporting
+name: module-18-qa-automation
 on:
   schedule:
     - cron: "30 1 * * *"  # nightly regression at 1:30 AM UTC (7:00 AM IST)

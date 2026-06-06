@@ -1,5 +1,7 @@
 # Module 8: Environment Variables and Secrets — Setting and Using Them
 
+![Module](https://img.shields.io/badge/Module-8-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Beginner-2da44e?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 7](./module-07-jobs-and-steps.md) | [Next: Module 9](./module-09-running-scripts.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-08-env-and-secrets.yml`](../examples/module-08-env-and-secrets.yml)
 

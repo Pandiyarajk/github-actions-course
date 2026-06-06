@@ -1,4 +1,4 @@
-# Module 12: Scheduling workflow runs with cron
+# Module 4: Scheduling workflow runs with cron
 #
 # GitHub Actions evaluates all cron schedules in UTC. Convert your local time
 # to UTC before committing (e.g. 7:00 AM IST = 1:30 AM UTC).
@@ -13,7 +13,7 @@
 #   * * * * *
 #
 # A workflow can list several schedules; each entry triggers an independent run.
-name: module-12-scheduled-workflows
+name: module-04-scheduled-workflows
 on:
   schedule:
     - cron: "0 * * * *"        # Hourly — at minute 0 of every hour

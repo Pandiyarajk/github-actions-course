@@ -1,6 +1,8 @@
 # PR Maintenance, Auto-Fix, and Workflow Cleanup
 
-> Level: **Advanced** | Suggested module: **Module 10**
+![Case Study](https://img.shields.io/badge/Case%20Study-4-1f6feb?style=flat-square) ![Difficulty](https://img.shields.io/badge/Difficulty-%E2%98%85%E2%98%85%E2%98%85-cf222e?style=flat-square) ![Level](https://img.shields.io/badge/Level-Advanced-cf222e?style=flat-square) [![Case Studies](https://img.shields.io/badge/%E2%AC%85%20Case%20Studies-555?style=flat-square)](README.md)
+
+> Level: **Advanced** | Suggested modules: **Module 11, Module 20**
 
 ## 1. Title
 
@@ -114,6 +116,8 @@ jobs:
       - name: Install tools
         run: pip install pre-commit
 
+      # `gh pr list --json number --jq '.[].number'` returns one PR number per
+      # line; the loop tries to update each branch and comments if it conflicts.
       - name: Update open PR branches
         env:
           GH_TOKEN: ${{ github.token }}
@@ -127,48 +131,30 @@ jobs:
             fi
           done
 
+      # The auto-fix loop (checkout each PR branch, run pre-commit, commit and
+      # push only if files changed) lives in a script to keep this step readable.
       - name: Apply safe pre-commit fixes
         if: github.event_name == 'schedule'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
-        run: |
-          for pr in $(gh pr list --state open --json number --jq '.[].number'); do
-            branch=$(gh pr view "$pr" --json headRefName --jq '.headRefName')
-            git fetch origin "$branch"
-            git checkout -B "$branch" "origin/$branch"
-            pre-commit run --all-files || true
-            if [ -n "$(git status --porcelain)" ]; then
-              git config user.name "automation-bot"
-              git config user.email "automation@example.com"
-              git add .
-              git commit -m "chore: apply safe formatting fixes"
-              git push origin "HEAD:$branch"
-            fi
-          done
+        run: ./scripts/autofix-open-prs.sh
 
   cleanup-runs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # The helper lists runs, keeps anything newer than --days, and deletes the
+      # rest. --dry-run true just previews. No jq/date arithmetic to read here.
       - name: Clean old workflow runs
         env:
           GH_TOKEN: ${{ github.token }}
-          DRY_RUN: ${{ inputs.dry_run || 'false' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          cutoff=$(date -d "7 days ago" +%Y-%m-%dT%H:%M:%SZ)
-          total=0
-          for run_id in $(gh run list --limit 100 --json databaseId,createdAt --jq ".[] | select(.createdAt < \"$cutoff\") | .databaseId"); do
-            if [ "$DRY_RUN" = "true" ]; then
-              echo "Would delete run $run_id"
-            else
-              gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/runs/$run_id"
-            fi
-            total=$((total + 1))
-          done
-          echo "Processed $total old workflow runs." >> $GITHUB_STEP_SUMMARY
+        run: python scripts/clean_old_runs.py --days 7 --dry-run ${{ inputs.dry_run || 'true' }}
 ```
 
 ## 8. Line-by-Line Explanation
@@ -180,8 +166,8 @@ jobs:
 - `pull-requests: write` allows branch updates and comments.
 - `actions: write` allows workflow run deletion.
 - `gh pr update-branch` keeps PR branches current without manual merges.
-- Auto-fix uses `pre-commit` and only commits when files changed.
-- Cleanup writes a summary so maintainers know what happened.
+- Auto-fix runs `scripts/autofix-open-prs.sh`, which uses `pre-commit` and only commits when files changed.
+- Cleanup runs `scripts/clean_old_runs.py`, which deletes runs older than `--days` and honors `--dry-run`.
 
 ## 9. Common Mistakes
 

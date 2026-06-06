@@ -1,5 +1,5 @@
-# Module 10: Email notifications after nightly regression — Python SMTP
-name: module-10-notifications
+# Module 20: Email notifications after nightly regression — Python SMTP
+name: module-20-notifications
 on:
   workflow_run:
     workflows:

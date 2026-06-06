@@ -1,5 +1,7 @@
 # Module 11: Essential Workflow Controls — Concurrency, Permissions, Defaults, and More
 
+![Module](https://img.shields.io/badge/Module-11-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20A%20Components-1f6feb?style=flat-square) ![Level](https://img.shields.io/badge/Level-Intermediate-d29922?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 10](./module-10-artifacts.md) | [Next: Module 12](./module-12-workflow-syntax.md)
 > Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-11-misc-features.yml`](../examples/module-11-misc-features.yml)
 

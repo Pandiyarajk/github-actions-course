@@ -1,5 +1,7 @@
 # Module 17: Deployment, Versioning, Tagging, and Release Automation
 
+![Module](https://img.shields.io/badge/Module-17-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Intermediate-d29922?style=flat-square) ![Time](https://img.shields.io/badge/Time-150%20min-555?style=flat-square)
+
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 16](./module-16-docker-performance.md) | [Next: Module 18](./module-18-qa-automation.md)
 > Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-17-release-automation.yml`](../examples/module-17-release-automation.yml)
 

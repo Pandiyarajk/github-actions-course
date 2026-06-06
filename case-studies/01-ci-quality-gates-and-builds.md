@@ -1,6 +1,8 @@
 # CI Quality Gates and Build Artifacts
 
-> Level: **Intermediate** | Suggested modules: **Module 5, Module 6, Module 7**
+![Case Study](https://img.shields.io/badge/Case%20Study-1-1f6feb?style=flat-square) ![Difficulty](https://img.shields.io/badge/Difficulty-%E2%98%85-d29922?style=flat-square) ![Level](https://img.shields.io/badge/Level-Intermediate-d29922?style=flat-square) [![Case Studies](https://img.shields.io/badge/%E2%AC%85%20Case%20Studies-555?style=flat-square)](README.md)
+
+> Level: **Intermediate** | Suggested modules: **Module 7, Module 10, Module 15**
 
 ## 1. Title
 
@@ -201,6 +203,7 @@ jobs:
 - `fetch-depth: 0` allows branch comparison.
 - `setup-python` with `cache: pip` speeds repeated installs.
 - `changed-files.txt` makes custom checks easier to debug.
+- `git diff --name-only main...HEAD` (three dots) lists files changed on this branch since it diverged from `main` — i.e. just this PR's changes, not unrelated commits on `main`.
 - `hashFiles('**/*.py')` avoids Python checks in repositories without Python files.
 - `if: always()` preserves evidence when a check fails.
 - The Windows build job runs only when manually requested.
