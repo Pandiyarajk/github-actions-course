@@ -1,0 +1,171 @@
+# Module 14: Naming Workflows with `name` and Dynamic `run-name`
+
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 13](./module-13-workflow-triggers.md) | [Next: Module 15](./module-15-jobs-and-steps.md)
+> Level: **Beginner** | Time: **90 min** | Example workflow: [`module-14-workflow-naming.yml`](../examples/module-14-workflow-naming.yml)
+
+## Learning Objectives
+
+- Set a static workflow `name`.
+- Build a dynamic per-run title with `run-name`.
+- Use expressions, `format()`, fallbacks, and event branching in `run-name`.
+- Make run history self-describing for triage.
+
+## Key Concepts
+
+`name`, `run-name`, expressions, `format()`, `||` fallback, `github.event_name`, folded scalars (`>-`)
+
+## Expected Outcome
+
+You can give a workflow a clear static name and a dynamic run title that summarizes each run at a glance.
+
+## Concept Flow
+
+```text
+name (static, in sidebar) + run-name (per run) -> Expression resolved at start -> Title in run history
+```
+
+---
+
+## ELI5 Explanation
+
+`name` is the label on the workflow's folder. `run-name` is the label you write on each individual run inside that folder — so instead of a list of identical names, each run can say what it actually did ("Smoke Tests - server1 | chrome | smoke").
+
+## Technical Explanation
+
+`name` is a static string shown in the Actions sidebar and required-check lists. `run-name` sets the title of each run and may contain `${{ }}` expressions evaluated when the run starts. Because expressions run at start time, `run-name` can read `github.event_name`, `inputs.*`, `github.ref_name`, and `github.event.*`. The `format('...{0}...', a)` function substitutes positional values, and `||` provides fallbacks for missing inputs (e.g. scheduled runs have no `inputs`). YAML folded scalars (`>-`) let a long expression span multiple lines for readability.
+
+## Real-World Use Case
+
+A smoke-test workflow runs both on a schedule and manually. Scheduled runs should read "Daily Smoke Tests: Scheduled," while manual runs should read "Smoke Tests - server1 | chrome | smoke" using the chosen inputs — so the run history is instantly understandable.
+
+## When To Use
+
+- Many runs of one workflow that need to be told apart.
+- Runs parameterized by inputs (server, browser, tags, batch).
+- Event-driven workflows where the event should appear in the title.
+
+## When NOT To Use
+
+- A workflow that runs rarely and needs no per-run distinction (static `name` is enough).
+- Putting secrets or sensitive values into a run title (titles are visible).
+
+## Common Mistakes
+
+- Using `inputs.x` for scheduled runs (no inputs exist) without a `||` fallback.
+- Forgetting that `run-name` expressions resolve at start, not per step.
+- Mixing `>` (folded, keeps a trailing newline) vs `>-` (folded, strips it) and getting odd spacing.
+- Putting a colon in plain text without quoting, breaking YAML.
+
+## Naming Patterns Reference
+
+| Goal | `run-name` |
+| --- | --- |
+| Static text + ref | `Static Code Analysis - ${{ github.ref_name }}` |
+| Inputs with fallbacks | `Auto Trigger - Server 1 | ${{ inputs.batch || 'batch1' }} | ${{ inputs.browser || 'chrome' }}` |
+| Schedule vs manual | folded expression choosing a title by `github.event_name` |
+| Branch create/delete | folded expression using `format()` per event |
+
+## Minimal Workflow Example
+
+```yaml
+name: Static Code Analysis
+run-name: Static Code Analysis - ${{ github.ref_name }}
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint
+        run: echo "pylint your-solution-root-folder-name/ --exit-zero"
+```
+
+### YAML Explanation
+
+- `name` is the static workflow name in the sidebar.
+- `run-name` appends the branch (`github.ref_name`) so each run shows its branch.
+
+### Step-by-Step Execution
+
+1. A push to a feature branch starts the workflow.
+2. `run-name` resolves to `Static Code Analysis - feature/IDAK-123`.
+3. The run history shows that branch-specific title.
+
+## Production Workflow Example
+
+The full example sets `name: Smoke Tests` and a dynamic `run-name` that differs for scheduled vs manual runs. See [`module-14-workflow-naming.yml`](../examples/module-14-workflow-naming.yml).
+
+### Schedule vs Manual Title
+
+```yaml
+name: Smoke Tests
+
+run-name: >-
+  ${{
+    github.event_name == 'schedule'
+      && 'Daily Smoke Tests: Scheduled'
+      || format(
+           'Smoke Tests - {0} | {1} | {2}',
+           github.event.inputs.server || 'server4',
+           github.event.inputs.browser || 'chrome',
+           github.event.inputs.tags || 'smoke'
+         )
+  }}
+```
+
+- On a `schedule` run, the title is `Daily Smoke Tests: Scheduled`.
+- On a manual run, `format()` builds `Smoke Tests - server1 | chrome | smoke` from the inputs, falling back to defaults when an input is empty.
+
+### Inputs With Fallbacks
+
+```yaml
+run-name: Auto Trigger - Server 1 | ${{ inputs.batch || 'batch1' }} | ${{ inputs.browser || 'chrome' }}
+```
+
+`||` supplies a default when the input is empty, so scheduled or partial runs still get a readable title.
+
+### Branch Create / Delete Title
+
+```yaml
+run-name: >-
+  ${{
+    github.event_name == 'create'
+      && format('Branch created: {0}', github.ref_name)
+      || github.event_name == 'delete'
+      && format('Branch deleted: {0}', github.event.ref)
+      || 'Branch Events'
+  }}
+```
+
+This chooses a different title per event type, falling back to `Branch Events`.
+
+### Folded Scalars: `>` vs `>-`
+
+| Style | Meaning |
+| --- | --- |
+| `>-` | Fold newlines into spaces and strip the final newline (preferred for `run-name`). |
+| `>` | Fold newlines into spaces but keep a trailing newline. |
+
+Use `>-` for multi-line `run-name` expressions so the title has no trailing blank line.
+
+### Expected Output
+
+- The Actions sidebar shows `Smoke Tests`.
+- Scheduled runs are titled `Daily Smoke Tests: Scheduled`.
+- Manual runs are titled from their inputs, e.g. `Smoke Tests - server1 | chrome | smoke`.
+
+## Labs
+
+| Difficulty | Task | Expected Output |
+| --- | --- | --- |
+| Beginner | Add `run-name` that appends `github.ref_name`. | Run title includes the branch name. |
+| Intermediate | Build a `run-name` from two inputs with `||` fallbacks. | Run title shows the chosen or default values. |
+| Challenge | Use a folded `>-` expression to title runs differently for schedule vs manual. | Scheduled and manual runs show distinct titles. |
+
+---
+
+[Previous: Module 13](./module-13-workflow-triggers.md) | [Module Index](./README.md) | [Next: Module 15](./module-15-jobs-and-steps.md)

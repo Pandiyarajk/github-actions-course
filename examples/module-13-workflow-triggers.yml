@@ -1,0 +1,109 @@
+# Module 13: The "on" section — workflow triggers and event filters
+#
+# This workflow demonstrates many trigger types and their filters in one place.
+# In real projects you would usually pick only the triggers a workflow needs.
+name: module-13-workflow-triggers
+on:
+  # --- Branch lifecycle -------------------------------------------------------
+  create:                       # a branch or tag is created
+  delete:                       # a branch or tag is deleted
+
+  # --- Push, filtered by branch ----------------------------------------------
+  push:
+    branches-ignore:
+      - main                    # run on every branch EXCEPT main
+    paths:
+      - "your-solution-root-folder-name/**"   # only when these files change
+      - "features/**"
+
+  # --- Pull request, filtered by type and target branch ----------------------
+  pull_request:
+    types: [opened, synchronize, reopened, closed]  # which PR actions fire it
+    branches:
+      - main                    # only PRs targeting main
+      - "release/**"            # and release branches
+
+  # --- Review events ----------------------------------------------------------
+  pull_request_review:
+    types: [submitted]          # a reviewer submits an approval/changes/comment
+  pull_request_review_comment:
+    types: [created]            # an inline code-review comment is added
+
+  # --- Issues and comments ----------------------------------------------------
+  issues:
+    types: [opened, labeled]
+  issue_comment:
+    types: [created]
+
+  # --- Scheduled --------------------------------------------------------------
+  schedule:
+    - cron: "30 1 * * *"        # daily at 01:30 UTC
+
+  # --- Manual run with typed inputs ------------------------------------------
+  workflow_dispatch:
+    inputs:
+      environment:              # dropdown (type: choice)
+        description: "Target environment"
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+        required: true
+      browser:                  # dropdown
+        description: "Browser to test"
+        type: choice
+        options:
+          - chrome
+          - firefox
+          - msedge
+        default: chrome
+        required: true
+      test_tag:                 # free text input
+        description: "Behave tag to run"
+        type: string
+        default: smoke
+        required: true
+      run_regression:           # boolean toggle
+        description: "Also run full regression"
+        type: boolean
+        default: false
+        required: false
+
+jobs:
+  show-trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report the event that triggered this run
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Action:     ${{ github.event.action }}"
+          echo "Ref:        ${{ github.ref }}"
+          echo "Ref type:   ${{ github.event.ref_type }}"
+
+      # Inputs only exist on a manual (workflow_dispatch) run.
+      - name: Show manual inputs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Environment:    ${{ inputs.environment }}"
+          echo "Browser:        ${{ inputs.browser }}"
+          echo "Test tag:       ${{ inputs.test_tag }}"
+          echo "Run regression: ${{ inputs.run_regression }}"
+
+      # Branch create vs delete (only for branches, not tags).
+      - name: Handle branch created
+        if: github.event_name == 'create' && github.event.ref_type == 'branch'
+        run: 'echo "Branch created: ${{ github.event.ref }} by ${{ github.actor }}"'
+
+      - name: Handle branch deleted
+        if: github.event_name == 'delete' && github.event.ref_type == 'branch'
+        run: 'echo "Branch deleted: ${{ github.event.ref }} by ${{ github.actor }}"'
+
+      # PR opened vs merged (closed + merged == true means it was merged).
+      - name: Handle PR opened
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        run: echo "PR #${{ github.event.pull_request.number }} opened"
+
+      - name: Handle PR merged
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        run: echo "PR #${{ github.event.pull_request.number }} was merged"

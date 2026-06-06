@@ -61,6 +61,12 @@ Capstones:    Apply everything in realistic delivery scenarios
 | 8 | Advanced | [QA Automation Workflows](module-08-qa-automation.md) | 150 min | [`module-08-qa-automation.yml`](../examples/module-08-qa-automation.yml) |
 | 9 | Advanced | [Monorepos, Enterprise Patterns, and Self-Hosted Runners](module-09-monorepo-best-practices.md) | 150 min | [`module-09-monorepo-best-practices.yml`](../examples/module-09-monorepo-best-practices.yml) |
 | 10 | Advanced | [Notifications, Observability, Debugging, and Governance](module-10-notifications.md) | 120 min | [`module-10-notifications.yml`](../examples/module-10-notifications.yml) |
+| 11 | Beginner | [Running Python, Shell, Bash, and CMD in Workflows](module-11-running-scripts.md) | 90 min | [`module-11-running-scripts.yml`](../examples/module-11-running-scripts.yml) |
+| 12 | Beginner | [Scheduling Workflow Runs with Cron](module-12-scheduled-workflows.md) | 90 min | [`module-12-scheduled-workflows.yml`](../examples/module-12-scheduled-workflows.yml) |
+| 13 | Beginner | [The `on` Section — Workflow Triggers and Event Filters](module-13-workflow-triggers.md) | 120 min | [`module-13-workflow-triggers.yml`](../examples/module-13-workflow-triggers.yml) |
+| 14 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](module-14-workflow-naming.md) | 90 min | [`module-14-workflow-naming.yml`](../examples/module-14-workflow-naming.yml) |
+| 15 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](module-15-jobs-and-steps.md) | 120 min | [`module-15-jobs-and-steps.yml`](../examples/module-15-jobs-and-steps.yml) |
+| 16 | Beginner | [Environment Variables and Secrets — Setting and Using Them](module-16-env-and-secrets.md) | 120 min | [`module-16-env-and-secrets.yml`](../examples/module-16-env-and-secrets.yml) |
 
 ## How To Study Each Module
 

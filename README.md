@@ -87,6 +87,12 @@ Capstone Project
 | 8 | Advanced | [QA Automation Workflows](modules/module-08-qa-automation.md) | 150 min |
 | 9 | Advanced | [Monorepos, Enterprise Patterns, and Self-Hosted Runners](modules/module-09-monorepo-best-practices.md) | 150 min |
 | 10 | Advanced | [Notifications, Observability, Debugging, and Governance](modules/module-10-notifications.md) | 120 min |
+| 11 | Beginner | [Running Python, Shell, Bash, and CMD in Workflows](modules/module-11-running-scripts.md) | 90 min |
+| 12 | Beginner | [Scheduling Workflow Runs with Cron](modules/module-12-scheduled-workflows.md) | 90 min |
+| 13 | Beginner | [The `on` Section — Workflow Triggers and Event Filters](modules/module-13-workflow-triggers.md) | 120 min |
+| 14 | Beginner | [Naming Workflows with `name` and Dynamic `run-name`](modules/module-14-workflow-naming.md) | 90 min |
+| 15 | Beginner | [Jobs, Job Naming, `timeout-minutes`, `runs-on`, `env`, and `steps`](modules/module-15-jobs-and-steps.md) | 120 min |
+| 16 | Beginner | [Environment Variables and Secrets — Setting and Using Them](modules/module-16-env-and-secrets.md) | 120 min |
 
 ---
 

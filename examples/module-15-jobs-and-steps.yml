@@ -1,0 +1,111 @@
+# Module 15: Jobs, job naming, timeout-minutes, runs-on, env, and steps
+#
+# A workflow contains one or more jobs. Each job:
+#   - has an ID (the YAML key) and an optional display "name"
+#   - selects a runner with "runs-on" (GitHub-hosted or self-hosted)
+#   - can set "timeout-minutes" so a hung job is cancelled
+#   - can define job-level "env" shared by all its steps
+#   - contains "steps" that run actions or shell commands
+#
+# This mirrors the real QA automation layout: a quick static-analysis job on a
+# GitHub-hosted runner, then a long BDD job on a self-hosted server.
+name: module-15-jobs-and-steps
+run-name: Jobs & Steps - ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        description: "Self-hosted server for the BDD job"
+        type: choice
+        options:
+          - server1
+          - server2
+          - server3
+          - server4
+        default: server4
+        required: true
+      tags:
+        description: "Behave tag"
+        type: string
+        default: smoke
+        required: true
+
+# Workflow-level env: available to every job and step (override at job/step level).
+env:
+  REPORT_HOME: reports
+  ALLURE_RESULTS: reports/allure-results
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: fast static analysis on a GitHub-hosted runner.
+  # ---------------------------------------------------------------------------
+  static-analysis:
+    name: Static Analysis (pylint + duplicates)   # friendly display name
+    runs-on: ubuntu-latest                         # GitHub-hosted runner
+    timeout-minutes: 15                            # cancel if it hangs past 15 min
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install analysis tools
+        run: pip install pylint check-duplicate-functions check-duplicate-variables
+
+      - name: Run pylint
+        run: pylint your-solution-root-folder-name/ --exit-zero
+
+      - name: Check for duplicate functions
+        run: check-duplicate-functions your-solution-root-folder-name/
+
+  # ---------------------------------------------------------------------------
+  # Job 2: long BDD regression on a self-hosted server (mirrors regression jobs).
+  # ---------------------------------------------------------------------------
+  bdd-regression:
+    name: BDD Regression on ${{ inputs.server }}
+    needs: static-analysis                         # only after analysis passes
+    runs-on: ${{ inputs.server }}                  # self-hosted runner label
+    timeout-minutes: 720                           # long suites need a high cap
+
+    # Job-level env: secrets and config shared by every step in this job.
+    env:
+      TEST_TAGS: ${{ inputs.tags }}
+      ZEPHYR_SCALE_TOKEN: ${{ secrets.ZEPHYR_SCALE_TOKEN }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+      JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install BDD dependencies
+        run: pip install behave selenium allure-behave
+
+      - name: Run Behave suite
+        # Step-level env overrides/extends job env for just this step.
+        env:
+          BROWSER: chrome
+        run: |
+          behave --tags=$TEST_TAGS \
+            -D browser=$BROWSER \
+            --no-capture \
+            -f allure_behave.formatter:AllureFormatter \
+            -o $ALLURE_RESULTS
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-results-${{ inputs.server }}
+          path: ${{ env.ALLURE_RESULTS }}
+          retention-days: 30

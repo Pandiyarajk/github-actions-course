@@ -1,0 +1,85 @@
+# Module 14: Naming workflows with "name" and dynamic "run-name"
+#
+# name      -> the STATIC workflow name shown in the Actions sidebar/list.
+# run-name  -> the title of each INDIVIDUAL run, can be built from expressions
+#              so every run is self-describing in the run history.
+#
+# This example shows several run-name styles. In a real workflow you would
+# keep only ONE run-name; the alternatives are shown in comments for learning.
+name: Smoke Tests
+
+# Dynamic run-name: schedule runs get a fixed title, manual runs get a title
+# built from the chosen inputs (with fallback defaults).
+run-name: >-
+  ${{
+    github.event_name == 'schedule'
+      && 'Daily Smoke Tests: Scheduled'
+      || format(
+           'Smoke Tests - {0} | {1} | {2}',
+           github.event.inputs.server || 'server4',
+           github.event.inputs.browser || 'chrome',
+           github.event.inputs.tags || 'smoke'
+         )
+  }}
+
+# --- Other run-name styles (uncomment ONE to use it) ------------------------
+#
+# Static text after the colon — simplest dynamic title:
+# run-name: Static Code Analysis - ${{ github.ref_name }}
+#
+# Manual-trigger title built from inputs with defaults:
+# run-name: Auto Trigger - Server 1 | ${{ inputs.batch || 'batch1' }} | ${{ inputs.browser || 'chrome' }}
+#
+# Branch lifecycle title chosen by event type:
+# run-name: >-
+#   ${{
+#     github.event_name == 'create'
+#       && format('Branch created: {0}', github.ref_name)
+#       || github.event_name == 'delete'
+#       && format('Branch deleted: {0}', github.event.ref)
+#       || 'Branch Events'
+#   }}
+
+on:
+  schedule:
+    - cron: "30 1 * * *"        # daily smoke at 01:30 UTC
+  workflow_dispatch:
+    inputs:
+      server:
+        description: "Server to run on"
+        type: choice
+        options:
+          - server1
+          - server2
+          - server3
+          - server4
+        default: server4
+        required: true
+      browser:
+        description: "Browser"
+        type: choice
+        options:
+          - chrome
+          - firefox
+          - msedge
+        default: chrome
+        required: true
+      tags:
+        description: "Behave tag"
+        type: string
+        default: smoke
+        required: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show resolved run title inputs
+        run: |
+          echo "Event:   ${{ github.event_name }}"
+          echo "Server:  ${{ github.event.inputs.server || 'server4 (default / scheduled)' }}"
+          echo "Browser: ${{ github.event.inputs.browser || 'chrome (default / scheduled)' }}"
+          echo "Tags:    ${{ github.event.inputs.tags || 'smoke (default / scheduled)' }}"
+
+      - name: Run smoke suite
+        run: echo "behave --tags=${{ github.event.inputs.tags || 'smoke' }} --no-capture"

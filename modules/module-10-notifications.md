@@ -1,6 +1,6 @@
 # Module 10: Notifications, Observability, Debugging, and Governance
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 9](./module-09-monorepo-best-practices.md) | [Next: Capstones](../capstones/README.md)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 9](./module-09-monorepo-best-practices.md) | [Next: Module 11](./module-11-running-scripts.md)
 > Level: **Advanced** | Time: **120 min** | Example workflow: [`module-10-notifications.yml`](../examples/module-10-notifications.yml)
 
 ## Learning Objectives
@@ -266,4 +266,4 @@ jobs:
 
 ---
 
-[Previous: Module 9](./module-09-monorepo-best-practices.md) | [Module Index](./README.md) | [Next: Capstones](../capstones/README.md)
+[Previous: Module 9](./module-09-monorepo-best-practices.md) | [Module Index](./README.md) | [Next: Module 11](./module-11-running-scripts.md)

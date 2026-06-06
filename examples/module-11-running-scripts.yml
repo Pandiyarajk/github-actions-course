@@ -1,0 +1,121 @@
+# Module 11: Running scripts and commands in workflows
+# Shows every common way to execute logic in a step:
+#   - a Python .py file on disk
+#   - inline Python (heredoc and python -c)
+#   - a shell (.sh) script on disk
+#   - inline bash commands
+#   - Windows cmd commands
+#   - PowerShell commands
+name: module-11-running-scripts
+on:
+  workflow_dispatch:
+    inputs:
+      test_tag:
+        description: "Behave tag to echo into the examples"
+        type: string
+        default: "smoke"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Linux runner: Python files, inline Python, bash, and shell scripts
+  # ---------------------------------------------------------------------------
+  linux-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # 1) Run a Python .py file that lives in the repository.
+      #    The default shell on Linux is bash, so `python` runs the file.
+      - name: Run a Python script file
+        run: python scripts/hello.py --tag "${{ inputs.test_tag }}"
+
+      # 2) Inline Python with `python -c` for a one-liner.
+      - name: Inline Python one-liner
+        run: python -c "import sys; print('Python', sys.version.split()[0])"
+
+      # 3) Inline Python as a heredoc block for multi-line logic.
+      #    The quoted 'PY' marker stops the shell from expanding $ inside.
+      - name: Inline Python heredoc
+        run: |
+          python - <<'PY'
+          import os
+          tag = os.environ.get("TEST_TAG", "smoke")
+          print(f"Building Behave command for tag: {tag}")
+          print(f"behave --tags={tag} --no-capture")
+          PY
+        env:
+          TEST_TAG: ${{ inputs.test_tag }}
+
+      # 4) Inline bash commands (default shell on Linux runners is bash).
+      - name: Inline bash commands
+        run: |
+          echo "Working directory: $(pwd)"
+          echo "Files in scripts/:"
+          ls -la scripts/
+          echo "Runner OS: $RUNNER_OS"
+
+      # 5) Run a shell (.sh) script file.
+      #    Make it executable first, then run it.
+      - name: Run a shell script file
+        run: |
+          chmod +x scripts/run-checks.sh
+          ./scripts/run-checks.sh "${{ inputs.test_tag }}"
+
+      # 6) Force a specific shell explicitly with `shell:`.
+      - name: Explicit bash shell with strict mode
+        shell: bash
+        run: |
+          set -euo pipefail   # exit on error, undefined var, or failed pipe
+          echo "Strict bash mode is on"
+
+  # ---------------------------------------------------------------------------
+  # Windows runner: cmd, PowerShell, and Python (mirrors self-hosted servers)
+  # ---------------------------------------------------------------------------
+  windows-scripts:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # 7) Windows cmd commands. The default shell on Windows is PowerShell,
+      #    so request cmd explicitly with `shell: cmd`.
+      - name: Windows cmd commands
+        shell: cmd
+        run: |
+          echo Current directory: %CD%
+          echo Runner OS: %RUNNER_OS%
+          dir scripts
+
+      # 8) PowerShell commands (the default Windows shell).
+      - name: PowerShell commands
+        shell: powershell
+        run: |
+          Write-Host "Working directory: $(Get-Location)"
+          Get-ChildItem scripts
+          $tag = "${{ inputs.test_tag }}"
+          Write-Host "Behave command: behave --tags=$tag"
+
+      # 9) Run the same Python file on Windows. `python` resolves to the
+      #    interpreter installed by actions/setup-python.
+      - name: Run a Python script file on Windows
+        run: python scripts/hello.py --tag "${{ inputs.test_tag }}"
+
+      # 10) cmd one-liner invoking a test runner (mirrors regression flows
+      #     on self-hosted Windows servers).
+      - name: cmd invoking a Python runner
+        shell: cmd
+        run: |
+          py -3.13 scripts\hello.py --tag %TEST_TAG%
+        env:
+          TEST_TAG: ${{ inputs.test_tag }}
