@@ -7,6 +7,7 @@ Use these pages when you need quick answers, production checklists, or advanced 
 | Resource | Use it for |
 | --- | --- |
 | [Advanced Topics and Workflow Library](advanced-topics.md) | Reusable workflows, composite actions, self-hosted runners, OIDC, security hardening, performance, debugging, and advanced workflow examples. |
+| [Debugging Clinic](debugging-clinic.md) | Twelve real workflow defects as symptom → diagnosis → fix, plus a triage order for when a workflow fails. |
 | [Reference Cheat Sheet](cheatsheet.md) | Common triggers, permissions, useful actions, production checklist, and Git contribution playbook. |
 | [What You Can Build Next](next-steps.md) | Ideas for extending the course into preview environments, security pipelines, QA dashboards, and OIDC deployments. |
 | [Production Workflow Case Studies](../case-studies/README.md) | Public-safe workflow patterns transformed from production-style automation. |

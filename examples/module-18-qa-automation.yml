@@ -19,10 +19,10 @@ jobs:
   api-health:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -43,10 +43,10 @@ jobs:
       matrix:
         browser: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', github.event.inputs.browser)) || fromJSON('["chrome","firefox"]') }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -58,8 +58,8 @@ jobs:
           TEST_TAGS: ${{ github.event.inputs.tags || 'regression' }}
           TEST_BROWSER: ${{ matrix.browser }}
         run: |
-          behave --tags=$TEST_TAGS \
-            -D browser=$TEST_BROWSER \
+          behave --tags="$TEST_TAGS" \
+            -D browser="$TEST_BROWSER" \
             --no-capture \
             -f allure_behave.formatter:AllureFormatter \
             -o reports/allure-results

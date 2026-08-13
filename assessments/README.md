@@ -12,12 +12,18 @@ Learners should be able to:
 6. Build a QA pipeline that produces useful evidence.
 7. Explain how secrets should be rotated and scoped.
 8. Create release automation with tags, artifacts, and notifications.
+9. Author a composite action, and justify it over a reusable workflow (or the reverse).
+10. Provide a job's dependencies with `container:` and `services:`, and address a service correctly.
+11. Publish an image to a registry with layer caching, and consume it reproducibly by digest.
+12. Audit a workflow for over-broad `permissions:`, expression injection, and unpinned third-party actions.
+13. Explain what a green required status check does and does not prove.
+14. Estimate and reduce a workflow's billed minutes without reducing coverage.
 
 ---
 
 ## Skill Checklist
 
-The checklist mirrors the two halves of the course, then a mastery tier.
+The checklist mirrors the three parts of the course, then a mastery tier.
 
 ### Part A — Workflow Components (Modules 1-11)
 
@@ -42,6 +48,25 @@ The checklist mirrors the two halves of the course, then a mastery tier.
 - [ ] I can automate releases with tags and artifacts.
 - [ ] I can use path filtering in a monorepo.
 - [ ] I can send notifications and write run summaries.
+
+### Part C — Platform, Security, and Operations (Modules 21-26)
+
+- [ ] I can write a composite action with typed `inputs` and `outputs`.
+- [ ] I can explain why a local action needs the checkout to run first.
+- [ ] I can choose between a composite action and a reusable workflow, and say why.
+- [ ] I can run a job in a container with a service dependency and a real health check.
+- [ ] I can address a service correctly from both a container job and a runner-hosted job.
+- [ ] I can publish an image to GHCR with `type=gha` layer caching.
+- [ ] I can consume an image by digest so a run is reproducible.
+- [ ] I can explain what `GITHUB_TOKEN` is scoped to and when it expires.
+- [ ] I can scope `permissions:` correctly, knowing that naming one scope resets the rest.
+- [ ] I can recognise and defuse the `pull_request_target` fork-escalation pattern.
+- [ ] I can rewrite an expression-injection risk to pass through `env:`.
+- [ ] I can pin a third-party action to a commit SHA and resolve that SHA.
+- [ ] I can gate a deployment behind an environment with required reviewers.
+- [ ] I can explain why a `skipped` required check does not block a merge, and build a gate job that fixes it.
+- [ ] I can lint a workflow with `actionlint` before pushing, and say what it cannot tell me.
+- [ ] I can name the runner cost multipliers and the levers that reduce billed minutes.
 
 ### Mastery (Capstone + advanced)
 

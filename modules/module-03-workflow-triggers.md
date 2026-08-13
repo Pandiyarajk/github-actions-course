@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 2](./module-02-workflow-naming.md) | [Next: Module 4](./module-04-scheduled-workflows.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-03-workflow-triggers.yml`](../examples/module-03-workflow-triggers.yml)
+> Solutions: [`module-03-solutions.md`](../solutions/module-03-solutions.md)
 
 ## Learning Objectives
 
@@ -165,7 +166,8 @@ on:
 ```yaml
 - name: Handle branch created
   if: github.event_name == 'create' && github.event.ref_type == 'branch'
-  run: echo "Branch created: ${{ github.event.ref }}"
+  run: |
+    echo "Branch created: ${{ github.event.ref }}"
 ```
 
 `create`/`delete` fire for tags too, so guard branch logic with `ref_type == 'branch'`.
@@ -224,6 +226,30 @@ Read them in steps:
 - Branch create/delete and review/issue events trigger their steps.
 - Manual runs show a form with dropdowns, text, and a toggle.
 
+## Quiz
+
+1. You want a job to run only when a pull request is actually **merged**. Which condition is correct?
+   - **A.** `on: pull_request: types: [closed]` alone — closing a PR means it merged.
+   - **B.** `on: pull_request: types: [closed]` plus `if: github.event.pull_request.merged == true`.
+   - **C.** `on: pull_request: types: [merged]`.
+   - **D.** `on: push: branches: [main]` with `if: github.event_name == 'pull_request'`.
+
+2. A workflow declares both `branches: [main]` and `branches-ignore: [main]` under the same `push` event. What happens?
+   - **A.** `branches-ignore` wins, so the workflow never runs on `main`.
+   - **B.** `branches` wins, so it runs only on `main`.
+   - **C.** The workflow is invalid — the two filters cannot be combined on one event.
+   - **D.** Both apply, so the workflow runs on every branch.
+
+3. Your `create`-triggered job runs when a teammate pushes a new **tag**, which you did not expect. What is the fix?
+   - **A.** Add `branches: ["**"]` to the `create` event.
+   - **B.** Guard the steps with `if: github.event.ref_type == 'branch'`.
+   - **C.** Use `types: [branch]` on the `create` event.
+   - **D.** Switch to `on: push` with `tags-ignore`.
+
+4. Compare a `choice` input to a `string` input for selecting a target environment. Explain what a `choice` input prevents, and why `required: true` alone does not achieve the same thing.
+
+5. A `paths:` filter on `push` and a `paths:` filter on `pull_request` behave differently. Explain the difference and describe one situation where a workflow appears to be skipped even though the file you edited matches the filter.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -231,6 +257,8 @@ Read them in steps:
 | Beginner | Add a `push` trigger with `branches-ignore: [main]`. | Workflow runs on feature branches but not main. |
 | Intermediate | Add a `pull_request` trigger with `types: [opened, closed]` targeting main. | Runs only on PR open and close events for main. |
 | Challenge | Add a `workflow_dispatch` form with a `choice` dropdown, a text input, and a boolean, then echo all three. | Manual run shows the form and logs the selected values. |
+
+Solutions: [`solutions/module-03-solutions.md`](../solutions/module-03-solutions.md)
 
 ---
 

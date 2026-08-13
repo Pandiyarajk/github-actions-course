@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 17](./module-17-release-automation.md) | [Next: Module 19](./module-19-monorepo-best-practices.md)
 > Level: **Advanced** | Time: **150 min** | Example workflow: [`module-18-qa-automation.yml`](../examples/module-18-qa-automation.yml)
+> Solutions: [`module-18-solutions.md`](../solutions/module-18-solutions.md)
 
 ## Learning Objectives
 
@@ -125,13 +126,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tests
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Cache pip
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('your-solution-root-folder-name/requirements.txt') }}
@@ -160,9 +161,9 @@ jobs:
         browser: [chrome, firefox]
     steps:
       - name: Checkout tests
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install dependencies
@@ -202,7 +203,7 @@ jobs:
           path: reports/allure-results
           merge-multiple: true
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Analyze Allure report
@@ -304,7 +305,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -323,6 +324,30 @@ jobs:
 
 Pin package versions for production workflows when reproducibility matters.
 
+## Quiz
+
+1. A browser matrix runs `chrome` and `firefox`, and both legs upload their Allure results with `name: allure-results`. What happens?
+   - **A.** The two uploads merge into one artifact containing both browsers' results.
+   - **B.** The second leg to finish overwrites the first.
+   - **C.** The second upload fails — artifacts are immutable from `upload-artifact@v4` onward, so a duplicate name is an error, not a merge.
+   - **D.** Both succeed and the UI shows two artifacts with the same name.
+
+2. Your UI job's Allure results and failure screenshots are missing from every run in which a scenario failed. What is the cause?
+   - **A.** `behave` deletes its results directory when it exits non-zero.
+   - **B.** The upload steps lack `if: always()`, so the failed `behave` step short-circuits the rest of the job.
+   - **C.** `retention-days` defaulted to zero.
+   - **D.** Self-hosted runners cannot upload artifacts after a failure.
+
+3. A QA job must run on one specific Windows self-hosted machine. Which `runs-on` is correct?
+   - **A.** `runs-on: server1` alone, since the label is unique.
+   - **B.** `runs-on: [self-hosted, windows, server1]` — labels are ANDed, so the job lands only on a runner carrying all three.
+   - **C.** `runs-on: self-hosted` plus `runner-name: server1`.
+   - **D.** `runs-on: [self-hosted, server1, server2]`, which pins the job to those two hosts in order.
+
+4. The nightly chain is `api-health-check` -> `ui-tests` -> `report-and-notify`. The reporting job must still run and email the team when the UI matrix fails. Explain the two things its job definition needs, and why `needs:` alone is not enough.
+
+5. Two scenarios in the smoke suite fail roughly one run in four for timing reasons, and the team has started ignoring the nightly email. Describe how you would restructure the workflows so that the flaky scenarios stop desensitising the team, without deleting the coverage.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -330,6 +355,8 @@ Pin package versions for production workflows when reproducibility matters.
 | Beginner | Add a smoke test workflow. | Smoke test runs on PR. |
 | Intermediate | Upload Allure results and screenshots as artifacts. | Evidence is available after failure or success. |
 | Challenge | Create a nightly API health-check + BDD UI (browser matrix) + Allure report + email chain. | Scheduled QA workflow runs daily at 1:30 AM UTC. |
+
+Solutions: [`solutions/module-18-solutions.md`](../solutions/module-18-solutions.md)
 
 ---
 

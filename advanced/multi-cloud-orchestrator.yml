@@ -41,7 +41,7 @@ jobs:
       release_id: ${{ steps.meta.outputs.release_id }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -70,7 +70,12 @@ jobs:
   deploy-aws:
     name: AWS deployment
     needs: build-promote
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_aws) || (github.event_name != 'workflow_dispatch') }}
+    # Folded with `>-` so the condition stays inside a readable width.
+    # Reads as: on a manual run, honour the checkbox; on any other event,
+    # always deploy.
+    if: >-
+      ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_aws) ||
+      (github.event_name != 'workflow_dispatch') }}
     uses: ./advanced/reusables/aws-deploy.yml
     with:
       image: ${{ needs.build-promote.outputs.image }}
@@ -81,7 +86,12 @@ jobs:
   deploy-azure:
     name: Azure deployment
     needs: build-promote
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_azure) || (github.event_name != 'workflow_dispatch') }}
+    # Folded with `>-` so the condition stays inside a readable width.
+    # Reads as: on a manual run, honour the checkbox; on any other event,
+    # always deploy.
+    if: >-
+      ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_azure) ||
+      (github.event_name != 'workflow_dispatch') }}
     uses: ./advanced/reusables/azure-deploy.yml
     with:
       image: ${{ needs.build-promote.outputs.image }}
@@ -93,7 +103,12 @@ jobs:
   deploy-gcp:
     name: GCP deployment
     needs: build-promote
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_gcp) || (github.event_name != 'workflow_dispatch') }}
+    # Folded with `>-` so the condition stays inside a readable width.
+    # Reads as: on a manual run, honour the checkbox; on any other event,
+    # always deploy.
+    if: >-
+      ${{ (github.event_name == 'workflow_dispatch' && inputs.deploy_gcp) ||
+      (github.event_name != 'workflow_dispatch') }}
     uses: ./advanced/reusables/gcp-deploy.yml
     with:
       image: ${{ needs.build-promote.outputs.image }}
@@ -114,9 +129,11 @@ jobs:
     steps:
       - name: Summarize roll-out
         run: |
-          echo "### Multi-cloud deployment" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Release: ${{ needs.build-promote.outputs.release_id }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Image: ${{ needs.build-promote.outputs.image }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- AWS: ${{ needs.deploy-aws.result }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Azure: ${{ needs.deploy-azure.result }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- GCP: ${{ needs.deploy-gcp.result }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Multi-cloud deployment"
+            echo "- Release: ${{ needs.build-promote.outputs.release_id }}"
+            echo "- Image: ${{ needs.build-promote.outputs.image }}"
+            echo "- AWS: ${{ needs.deploy-aws.result }}"
+            echo "- Azure: ${{ needs.deploy-azure.result }}"
+            echo "- GCP: ${{ needs.deploy-gcp.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -100,10 +100,22 @@ jobs:
         run: 'echo "Branch deleted: ${{ github.event.ref }} by ${{ github.actor }}"'
 
       # PR opened vs merged (closed + merged == true means it was merged).
+      #
+      # Note the `run: |` block scalars below. A one-line `run: echo "PR #1"`
+      # would put a `#` inside a plain YAML scalar, where linters -- and some
+      # parsers -- read it as the start of a comment. A block scalar takes the
+      # rest of the lines verbatim, so `#` is just a character.
       - name: Handle PR opened
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
-        run: echo "PR #${{ github.event.pull_request.number }} opened"
+        run: |
+          echo "PR #${{ github.event.pull_request.number }} opened"
 
       - name: Handle PR merged
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-        run: echo "PR #${{ github.event.pull_request.number }} was merged"
+        # Folded with `>-` so a long condition stays readable. See Module 2 for
+        # how `>` and `>-` differ from `|`.
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.action == 'closed' &&
+          github.event.pull_request.merged == true
+        run: |
+          echo "PR #${{ github.event.pull_request.number }} was merged"

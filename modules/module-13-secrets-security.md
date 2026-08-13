@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 12](./module-12-workflow-syntax.md) | [Next: Module 14](./module-14-matrix-and-reuse.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-13-secrets-security.yml`](../examples/module-13-secrets-security.yml)
+> Solutions: [`module-13-solutions.md`](../solutions/module-13-solutions.md)
 
 ## Learning Objectives
 
@@ -77,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -121,10 +122,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -171,6 +172,30 @@ jobs:
 - Reporting uses environment-scoped secrets for Zephyr/Jira/SMTP.
 - Secret values remain masked.
 
+## Quiz
+
+1. What does GitHub's secret masking actually guarantee?
+   - **A.** No step in the workflow can read the secret's value.
+   - **B.** Log output is scanned and exact matches of the secret are replaced with `***`, but a step that deliberately transforms the value can still reveal it.
+   - **C.** The secret is decrypted only inside `actions/checkout`.
+   - **D.** The secret cannot be sent over the network from the runner.
+
+2. Which statement about `GITHUB_TOKEN` is correct?
+   - **A.** You must create a personal access token and store it as a secret named `GITHUB_TOKEN`.
+   - **B.** It is minted automatically for each workflow run and expires when the run finishes; its scope is set by `permissions:`.
+   - **C.** It is a single long-lived token shared by every run in the repository.
+   - **D.** It always carries the permissions of the user who triggered the run.
+
+3. A workflow needs the title of the triggering issue inside a `run:` block. Which form is safe?
+   - **A.** `run: echo "Title: ${{ github.event.issue.title }}"` — the quotes make it safe.
+   - **B.** Assign it under `env:` and reference the environment variable inside the script.
+   - **C.** Read it from `${{ vars.ISSUE_TITLE }}` instead.
+   - **D.** Any form is safe, because `github.event` values come from GitHub rather than from a user.
+
+4. Your reporting job currently reads `ZEPHYR_SCALE_TOKEN` from a repository secret. Explain what actually changes, in security terms, when you move it to an **environment** secret on a protected `production` environment — and what does *not* change.
+
+5. `EMAIL_PASS` is a secret and `EMAIL_TO` is a variable. Explain the rule you used to decide, and give one concrete operational cost of storing a non-sensitive value like `EMAIL_TO` as a secret anyway.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -178,6 +203,8 @@ jobs:
 | Beginner | Create the `ZEPHYR_SCALE_TOKEN` repository secret and validate it exists with a Python assertion. | Workflow passes when secret exists. |
 | Intermediate | Move `EMAIL_TO`/`EMAIL_CC` recipient config to repository variables. | Logs show non-sensitive config only. |
 | Challenge | Add a protected `production` environment with manual approval for the reporting job. | Reporting waits for approval. |
+
+Solutions: [`solutions/module-13-solutions.md`](../solutions/module-13-solutions.md)
 
 ---
 

@@ -53,7 +53,9 @@ jobs:
 
       - name: Attach summary
         run: |
-          echo "### Azure deployment" >> "$GITHUB_STEP_SUMMARY"
-          echo "- RG: ${{ inputs.resource_group }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- App: ${{ inputs.container_app }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Image: ${{ inputs.image }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Azure deployment"
+            echo "- RG: ${{ inputs.resource_group }}"
+            echo "- App: ${{ inputs.container_app }}"
+            echo "- Image: ${{ inputs.image }}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 7](./module-07-jobs-and-steps.md) | [Next: Module 9](./module-09-running-scripts.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-08-env-and-secrets.yml`](../examples/module-08-env-and-secrets.yml)
+> Solutions: [`module-08-solutions.md`](../solutions/module-08-solutions.md)
 
 ## Learning Objectives
 
@@ -62,6 +63,16 @@ A BDD job needs `ZEPHYR_SCALE_TOKEN` and `JIRA_API_TOKEN` to publish results. Th
 - Expecting a `$GITHUB_ENV` value to exist in the **same** step that set it (it applies to later steps).
 - Forgetting an `id:` on a step whose `$GITHUB_OUTPUT` you want to read.
 - Putting secrets in `run-name` or step names (they are visible).
+
+## Debugging Tips
+
+- When a variable looks empty, print its *length* rather than its value: `echo "len=${#API_TOKEN}"`. That distinguishes "never reached the job" from "wrong value" without revealing a secret.
+- `env | sort` (bash) or `Get-ChildItem Env: | Sort-Object Name` (PowerShell) as a temporary step is the fastest way to see which scope actually won. Secret values are masked in that output, so it is safe to leave in while debugging.
+- Three asterisks (`***`) in a log are not a bug — that is masking working. Seeing them where you did not expect them means a secret is being interpolated somewhere you did not intend.
+- A `$GITHUB_ENV` value that reads as empty is nearly always being read in the *same* step that wrote it. Split the write and the read into two steps and it appears.
+- A step output that resolves to nothing usually means the producing step has no `id:`, or the key name differs between the `>> "$GITHUB_OUTPUT"` line and the `steps.<id>.outputs.<key>` reference. Both fail silently rather than erroring.
+- On Windows, an empty value in a `run:` block often just means the wrong syntax for the shell: `$VAR` is a bash-ism and expands to nothing in PowerShell, which needs `$env:VAR`.
+- Multi-line values written to `$GITHUB_ENV` need heredoc delimiter syntax; a bare `KEY=line1\nline2` truncates at the first newline or errors on the stray line.
 
 ## Reference Tables
 
@@ -146,7 +157,8 @@ Secrets are masked in logs. Assigning them to `env` is how scripts and tools rec
   run: echo "RUN_LABEL=bdd-${{ github.run_number }}" >> "$GITHUB_ENV"
 
 - name: Use it in a later step
-  run: echo "This run is labeled: $RUN_LABEL"
+  run: |
+    echo "This run is labeled: $RUN_LABEL"
 ```
 
 `$GITHUB_ENV` makes the value available to **subsequent** steps, not the step that wrote it.
@@ -180,7 +192,8 @@ Secrets are masked in logs. Assigning them to `env` is how scripts and tools rec
   run: echo "report_name=allure-$RUN_LABEL" >> "$GITHUB_OUTPUT"
 
 - name: Consume the step output
-  run: echo "Report will be named: ${{ steps.meta.outputs.report_name }}"
+  run: |
+    echo "Report will be named: ${{ steps.meta.outputs.report_name }}"
 ```
 
 ### Read Env on Windows
@@ -188,11 +201,13 @@ Secrets are masked in logs. Assigning them to `env` is how scripts and tools rec
 ```yaml
 - name: Read env in PowerShell
   shell: powershell
-  run: Write-Host "Behave tags: $env:TEST_TAGS"
+  run: |
+    Write-Host "Behave tags: $env:TEST_TAGS"
 
 - name: Read env in cmd
   shell: cmd
-  run: echo Behave tags: %TEST_TAGS%
+  run: |
+    echo Behave tags: %TEST_TAGS%
 ```
 
 ### Expected Output
@@ -203,6 +218,30 @@ Secrets are masked in logs. Assigning them to `env` is how scripts and tools rec
 - The step output feeds the artifact name.
 - PowerShell and cmd read the same job env with their own syntax.
 
+## Quiz
+
+1. A step runs `echo "RUN_LABEL=bdd-42" >> "$GITHUB_ENV"` and then, in the **same** step, `echo "$RUN_LABEL"`. What is printed?
+   - **A.** `bdd-42` — the file is read immediately.
+   - **B.** An empty line — `$GITHUB_ENV` applies to subsequent steps, not the step that wrote it.
+   - **C.** The literal text `RUN_LABEL=bdd-42`.
+   - **D.** The step fails because `$GITHUB_ENV` is read-only.
+
+2. A Windows step declares `shell: powershell` and runs `Write-Host "Tags: $TEST_TAGS"`, where `TEST_TAGS` is set in job-level `env`. What happens?
+   - **A.** It prints the tags correctly; `$VAR` is portable across shells.
+   - **B.** It prints `Tags:` with nothing after it — PowerShell needs `$env:TEST_TAGS`, since `$TEST_TAGS` is an undefined PowerShell variable.
+   - **C.** The step fails with an undefined-variable error.
+   - **D.** Job-level `env` is not visible to PowerShell steps at all.
+
+3. Which of these actually leaks a secret's value where a reader can see it?
+   - **A.** `env: API_TOKEN: ${{ secrets.API_TOKEN }}` on a job.
+   - **B.** `test -n "$API_TOKEN" && echo "API_TOKEN is set"`.
+   - **C.** `run-name: Deploy with ${{ secrets.API_TOKEN }}`.
+   - **D.** Passing the token to a Python script through `os.environ`.
+
+4. A step writes `echo "report_name=allure-nightly" >> "$GITHUB_OUTPUT"` and a later step reads `${{ steps.meta.outputs.report_name }}`, which resolves to nothing — with no error. List the two things you would check first, and explain why the failure is silent.
+
+5. Your team wants a workflow to fail fast with a clear message when a required secret is missing, rather than failing deep inside a Python upload step. Describe how you would implement that check and why it must not print the secret.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -210,6 +249,8 @@ Secrets are masked in logs. Assigning them to `env` is how scripts and tools rec
 | Beginner | Add a job-level env value and read it in a bash step. | Step prints the value. |
 | Intermediate | Create a value with `$GITHUB_ENV` and use it in a later step. | Later step reads the runtime value. |
 | Challenge | Pass a secret into env and verify it with Python without echoing it, then expose a step output for a later step. | Secret check passes silently; later step reads the output. |
+
+Solutions: [`solutions/module-08-solutions.md`](../solutions/module-08-solutions.md)
 
 ---
 

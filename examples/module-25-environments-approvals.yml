@@ -1,0 +1,259 @@
+# =============================================================================
+# Module 25: Environments, approvals, and the one required status check
+#
+# A staged release with a human gate in the middle:
+#
+#   regression          runs the suite. No environment, so no deploy credential
+#                       is readable from it at all.
+#   deploy-staging      environment: staging. No protection rules -> automatic.
+#   deploy-production   environment: production. Required reviewers + a
+#                       tags-only deployment branch policy -> PAUSES.
+#   gate                if: always(), needs everything. The ONLY job that should
+#                       be a required status check.
+#
+# Three gotchas this file is built around:
+#
+#   1. Both deploy jobs write `${{ secrets.DEPLOY_TOKEN }}` and get DIFFERENT
+#      values. That is environment scoping, and it is the part that actually
+#      protects anything. If the token lived in repository secrets, the approval
+#      gate would guard only the TIMING -- every other job could already read it.
+#
+#   2. A job skipped by an `if:` or a path filter reports `skipped`, and a
+#      skipped required check does NOT block a merge. Requiring the inner jobs
+#      directly is therefore not the safe-looking choice it appears to be.
+#      Requiring only `gate` fixes both that and the rename problem: the job
+#      name IS the check name, so renaming an inner job silently detaches
+#      branch protection, leaving a rule waiting on a check that never reports.
+#
+#   3. `on: merge_group` must be listed or the merge queue has no checks to run
+#      and merges PRs without gating them -- the queue is not covered by the
+#      `pull_request` trigger.
+name: module-25-environments-approvals
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  pull_request:
+  # Queued runs fire `merge_group`, NOT `pull_request`. Omit this and the merge
+  # queue finds nothing to wait for and merges straight through.
+  merge_group:
+  workflow_dispatch:
+
+# Least privilege: nothing here writes to the repository. Deploy credentials
+# come from environment secrets, not from GITHUB_TOKEN.
+permissions:
+  contents: read
+
+concurrency:
+  # Keyed per tag/branch. Deliberately NOT cancel-in-progress: cancelling a run
+  # that is mid-deploy, or one already waiting on a reviewer, loses the approval.
+  group: module-25-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Tests first. This job holds no environment, so it cannot read either
+  # DEPLOY_TOKEN -- an environment secret is an empty string in a job that does
+  # not declare the environment, not an error.
+  # ---------------------------------------------------------------------------
+  regression:
+    name: Regression gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python suite
+        uses: ./.github/actions/setup-python-suite
+        with:
+          python-version: "3.13"
+          working-directory: your-solution-root-folder-name
+          extra-packages: allure-behave pylint
+
+      - name: Lint the step definitions
+        working-directory: your-solution-root-folder-name
+        run: pylint features/steps --fail-under=9.0
+
+      - name: Run Behave regression suite
+        working-directory: your-solution-root-folder-name
+        env:
+          BASE_URL: https://staging.your-domain.com
+          TARGET_SERVER: server1
+        run: |
+          behave --tags=regression \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-regression
+          path: your-solution-root-folder-name/reports/allure-results/
+          retention-days: 14
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Staging: same secret NAME, staging VALUE, no gate.
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to staging
+    needs: regression
+    # A PR or a merge-queue run has nothing to release, so this skips there. That
+    # skip is exactly why the inner jobs cannot be the required checks: a
+    # `skipped` required check does not block a merge.
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # `staging` has no protection rules configured, so this deploys the moment
+    # regression is green. `url:` makes the target a clickable link on the run
+    # and in the environment's deployment history.
+    environment:
+      name: staging
+      url: https://staging.your-domain.com
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Deploy to staging
+        env:
+          # The STAGING environment's DEPLOY_TOKEN. Identical expression to the
+          # production job below, different value -- resolution is scoped by the
+          # `environment:` declared on the job. This job literally cannot read
+          # the production credential, which is why a compromised staging deploy
+          # does not become a production incident.
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          TARGET_HOST: staging.your-domain.com
+        run: |
+          # Never echo the token itself; length is enough to prove it resolved.
+          echo "Deploying to ${TARGET_HOST} with a ${#DEPLOY_TOKEN}-char token."
+
+      - name: Smoke-test staging
+        env:
+          BASE_URL: https://staging.your-domain.com
+        run: |
+          echo "Running post-deploy smoke checks against ${BASE_URL}"
+
+  # ---------------------------------------------------------------------------
+  # Production: the gated stage.
+  # ---------------------------------------------------------------------------
+  deploy-production:
+    name: Deploy to production
+    needs: deploy-staging
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # `production` carries required reviewers AND a tags-only deployment branch
+    # policy.
+    #
+    # THE PAUSE HAPPENS BEFORE THE FIRST STEP RUNS. No checkout, no build, no
+    # log output exists at approval time -- so a reviewer is approving the
+    # COMMIT, not a preview of what this job will do. Anyone expecting to
+    # inspect test output on the approval screen has misread the feature; put
+    # the evidence upstream (see the regression artifact above) instead.
+    #
+    # The branch policy REJECTS rather than PREVENTS: a workflow_dispatch from a
+    # branch still creates this job, which then fails with "Branch is not
+    # allowed to deploy to production". That is a policy rejection, not a
+    # permissions bug.
+    environment:
+      name: production
+      url: https://your-domain.com
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Deploy to production
+        env:
+          # Same name, PRODUCTION value. Compare with deploy-staging.
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          TARGET_HOSTS: server1 server2 server3 server4
+        run: |
+          for host in ${TARGET_HOSTS}; do
+            echo "Deploying to ${host}.your-domain.com"
+          done
+
+      - name: Record the deployment
+        env:
+          # Bound via env rather than interpolated: `github.actor` is safe here,
+          # but keeping the habit means the one attacker-controlled value that
+          # eventually appears is already handled (Module 24).
+          RELEASE_REF: ${{ github.ref_name }}
+          APPROVAL_ACTOR: ${{ github.actor }}
+        run: |
+          {
+            echo "## Production deployment"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Release | ${RELEASE_REF} |"
+            echo "| Triggered by | ${APPROVAL_ACTOR} |"
+            echo "| Approved via | production environment reviewers |"
+            echo
+            echo "The approval was recorded against the run before any step ran."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # THE ONLY REQUIRED STATUS CHECK.
+  #
+  # Configure branch protection (or a ruleset) to require `Release gate` and
+  # nothing else. Two reasons:
+  #
+  #   * A required check is matched by JOB NAME. Renaming `regression` would
+  #     silently detach a rule that required it -- the rule then waits forever
+  #     for a check that will never report, or is quietly dropped. Only this
+  #     job's name is load-bearing, and it never needs to change.
+  #
+  #   * `skipped` does not block a merge. A path-filtered or `if:`-guarded inner
+  #     job contributes NOTHING as a required check on a run where it skips --
+  #     intended when the filter is right, invisible when the filter is subtly
+  #     wrong. This job converts every upstream conclusion into a real pass/fail.
+  #
+  # `if: always()` is mandatory. With `if: needs.regression.result == 'success'`
+  # the gate itself skips when an upstream job fails, so it never reports the
+  # failure -- a gate that passes when it should fail is nearly always this bug.
+  # ---------------------------------------------------------------------------
+  gate:
+    name: Release gate
+    if: always()
+    needs: [regression, deploy-staging, deploy-production]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify upstream results
+        env:
+          # Results collected via env so the shell sees data, not script text.
+          REGRESSION_RESULT: ${{ needs.regression.result }}
+          STAGING_RESULT: ${{ needs.deploy-staging.result }}
+          PRODUCTION_RESULT: ${{ needs.deploy-production.result }}
+        run: |
+          failed=0
+          for entry in \
+            "regression=${REGRESSION_RESULT}" \
+            "deploy-staging=${STAGING_RESULT}" \
+            "deploy-production=${PRODUCTION_RESULT}"
+          do
+            job="${entry%%=*}"
+            result="${entry#*=}"
+            case "${result}" in
+              # `skipped` is acceptable ONLY because the deploy jobs legitimately
+              # skip on a pull_request or merge_group run, where there is nothing
+              # to release. `failure` and `cancelled` must never pass here.
+              success|skipped)
+                echo "ok: ${job} -> ${result}"
+                ;;
+              *)
+                echo "::error::Upstream job '${job}' concluded '${result}'"
+                failed=1
+                ;;
+            esac
+          done
+
+          # Report every bad result before exiting rather than failing on the
+          # first, so one run tells you everything that is wrong.
+          if [ "${failed}" -ne 0 ]; then
+            exit 1
+          fi
+          echo "All upstream jobs are acceptable."

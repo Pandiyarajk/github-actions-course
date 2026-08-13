@@ -1,0 +1,214 @@
+# Module 23: Build and publish a test-runner image to GHCR
+#
+# Bakes the Behave/Selenium toolchain into an image so the fifteen workflows that
+# need it stop paying the install cost per run. The image is then consumable as a
+# `container:` job — see Module 22.
+#
+# Four things here are the ones people get wrong:
+#
+#   1. `permissions: packages: write` is NOT in the default token grant. Without
+#      it the push fails with `denied`, which reads as bad credentials.
+#   2. `setup-buildx-action` must run before the build, or `cache-to` is accepted
+#      and silently does nothing.
+#   3. `mode=max` caches intermediate stages; the default `mode=min` keeps only
+#      the final layer and gives most of the benefit away.
+#   4. GHCR rejects uppercase image names, and `github.repository` preserves the
+#      repository's capitalisation.
+name: module-23-docker-publish
+
+run-name: >-
+  Publish test-runner ${{ github.ref_type == 'tag' && github.ref_name || 'build-only' }}
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  pull_request:
+    # On a PR, build without pushing: validates the Dockerfile and warms the
+    # cache without publishing anything.
+    paths:
+      - "docker/**"
+      - ".github/workflows/module-23-docker-publish.yml"
+  workflow_dispatch:
+    inputs:
+      push:
+        description: "Push the image, or build only"
+        type: boolean
+        default: false
+      multi-arch:
+        description: "Also build linux/arm64 (roughly doubles build time)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: module-23-${{ github.ref }}
+  # Deliberately NOT cancel-in-progress: cancelling midway through a layer
+  # upload can leave a partially-pushed manifest.
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build and publish test-runner
+    runs-on: ubuntu-latest
+
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+      pushed: ${{ steps.decide.outputs.push }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Compute lowercase image name
+        id: name
+        run: |
+          # ${VAR,,} is bash lowercasing. Needed because GHCR rejects uppercase
+          # names and GITHUB_REPOSITORY keeps the repo's own capitalisation.
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}/test-runner" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to push
+        id: decide
+        run: |
+          # Push on a tag, or when a manual run asks for it. Never on a PR --
+          # a fork PR must not be able to publish to the registry.
+          if [ "${{ github.ref_type }}" = "tag" ] || [ "${{ inputs.push }}" = "true" ]; then
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "push=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # QEMU is only needed for cross-architecture builds. Skipped otherwise so
+      # the common path stays fast.
+      - name: Set up QEMU
+        if: inputs.multi-arch
+        uses: docker/setup-qemu-action@v4
+
+      # REQUIRED before build-push-action for BuildKit features. Omitting it
+      # makes `cache-to: type=gha` a no-op with no error.
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        # Login is skipped on a build-only run so the workflow still works on a
+        # fork PR, where the token has no package write access.
+        if: steps.decide.outputs.push == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Derives the whole tag set from the git ref. Hand-writing tags is how
+      # images end up published as `latest` only, with no way to roll back.
+      - name: Derive tags and labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.name.outputs.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=BDD test runner
+            org.opencontainers.image.description=Python 3.13 + Behave + Selenium + Allure
+
+      - name: Show computed tags
+        run: |
+          echo "Tags that will be applied:"
+          echo "${{ steps.meta.outputs.tags }}"
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./docker/Dockerfile.test-runner
+          push: ${{ steps.decide.outputs.push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ inputs.multi-arch && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          # Build args come from `env`/expressions, never from raw event data --
+          # interpolating ${{ github.event.* }} here is the same script-injection
+          # vector as in a `run:` block. See Module 24.
+          build-args: |
+            PYTHON_VERSION=3.13
+
+      - name: Verify the published image runs
+        if: steps.decide.outputs.push == 'true'
+        run: |
+          # Pull by DIGEST, not tag. This proves the exact artefact just pushed
+          # works, rather than whatever `latest` currently points at.
+          image="${{ steps.name.outputs.image }}@${{ steps.build.outputs.digest }}"
+          docker run --rm "$image" behave --version
+          docker run --rm "$image" python --version
+
+      - name: Record published image
+        if: always()
+        run: |
+          {
+            echo "## Test-runner image"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Image | \`${{ steps.name.outputs.image }}\` |"
+            echo "| Digest | \`${{ steps.build.outputs.digest }}\` |"
+            echo "| Pushed | ${{ steps.decide.outputs.push }} |"
+            echo "| Platforms | ${{ inputs.multi-arch && 'amd64 + arm64' || 'amd64' }} |"
+            echo
+            echo "Consume it by digest for a reproducible run:"
+            echo
+            echo '```yaml'
+            echo "container:"
+            echo "  image: ${{ steps.name.outputs.image }}@${{ steps.build.outputs.digest }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Consume the image just built, by digest. This is the payoff: the suite runs
+  # with zero setup steps because the environment is already in the image.
+  # ---------------------------------------------------------------------------
+  smoke-test-image:
+    name: Smoke-test the published image
+    needs: publish
+    if: needs.publish.outputs.pushed == 'true'
+    runs-on: ubuntu-latest
+
+    container:
+      image: ${{ needs.publish.outputs.image }}@${{ needs.publish.outputs.digest }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # No setup-python, no pip install: the image already has everything.
+      - name: Run smoke suite
+        working-directory: your-solution-root-folder-name
+        env:
+          BASE_URL: https://your-domain.com
+        run: |
+          behave --tags=smoke \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-image-smoke
+          path: your-solution-root-folder-name/reports/allure-results/
+          retention-days: 14
+          if-no-files-found: error

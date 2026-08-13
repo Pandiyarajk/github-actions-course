@@ -1,0 +1,20 @@
+# actionlint configuration
+#
+# Author: Pandiyaraj Karuppasamy
+# Date: Aug-13-2026
+#
+# actionlint validates `runs-on` against the list of labels GitHub actually
+# provides, so every self-hosted label the course uses is reported as unknown
+# until it is declared here. That check is worth keeping rather than disabling:
+# a mistyped label does not fail a workflow, it leaves the job QUEUED
+# indefinitely (Module 6), so a linter catching the typo is the only fast
+# feedback available.
+self-hosted-runner:
+  labels:
+    # The four Windows QA servers used throughout the modules and examples.
+    - server1
+    - server2
+    - server3
+    - server4
+    # Capability labels used by the advanced scenarios.
+    - gpu

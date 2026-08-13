@@ -1,0 +1,59 @@
+# yamllint configuration for the GitHub Actions Enablement Course.
+#
+# Author: Pandiyaraj Karuppasamy
+# Date: Aug-13-2026
+#
+# Tuned for workflow files specifically. Three of yamllint's defaults fight the
+# GitHub Actions format rather than finding real problems, and are relaxed below
+# with the reason stated -- the rest are left strict on purpose.
+
+extends: default
+
+rules:
+  # `on:` is the workflow trigger key, not the YAML 1.1 boolean `on`. Every
+  # workflow file in this repo would otherwise fail on line 3.
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+
+  # Workflow expressions (`${{ ... }}`) and `uses:` SHA pins are routinely longer
+  # than 80 columns and some -- a `fromJSON` matrix expression, a one-line
+  # readiness probe -- cannot be wrapped at all without changing their meaning.
+  # Kept as a warning so it informs without failing CI: yamllint is here to catch
+  # structural defects, and line length in a workflow file is not one.
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+    level: warning
+
+  # `run: echo "PR #123"` puts a `#` inside a plain flow scalar, which yamllint
+  # reads as an inline comment. Prefer a `run: |` block scalar in that case; the
+  # rule stays a warning rather than an error because the diagnosis is a parser
+  # artifact, not a defect in the workflow.
+  comments-indentation: disable
+
+  # Teaching workflows use comment banners to explain each section; requiring a
+  # blank line before every one of them would add noise to the examples.
+  comments:
+    require-starting-space: true
+    min-spaces-from-content: 1
+    level: warning
+
+  # A leading `---` adds nothing to a single-document workflow file and none of
+  # the course examples use one.
+  document-start: disable
+
+  # Line endings are enforced by `.gitattributes` (LF in the repository), which is
+  # the only place that can enforce them consistently. This rule inspects the
+  # working tree instead, so with `core.autocrlf=true` it fails on Windows for
+  # files that are stored correctly as LF -- a false positive, not a defect.
+  new-lines: disable
+
+  # Long `steps:` lists read better with blank lines between logical groups.
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 0
+
+ignore: |
+  .git/

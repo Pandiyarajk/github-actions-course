@@ -1,0 +1,161 @@
+# Module 22: Container jobs and service containers
+#
+# Runs the SAME readiness probe from two jobs to make the one rule that matters
+# concrete: how you address a service depends on where your job runs.
+#
+#   job `on-the-runner`   steps execute on ubuntu-latest, outside the job's
+#                         Docker network. The service must publish `ports:` and
+#                         is reached at localhost.
+#
+#   job `in-a-container`  steps execute inside python:3.13-slim, on the same
+#                         network as the service. No `ports:` needed, and the
+#                         service is reached by its LABEL as hostname.
+#
+# Swapping the two addresses is the single most common failure with services,
+# and it presents as a connection refusal that looks like the service never
+# started. Both jobs below print which address worked.
+name: module-22-container-jobs
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 02:00 UTC on weekdays. Cron is always UTC — see Module 4.
+    - cron: "0 2 * * 1-5"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: module-22-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned rather than :latest so a grid upgrade is a deliberate commit.
+  SELENIUM_IMAGE: selenium/standalone-chrome:126.0
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job runs ON the runner. Needs `ports:`; reached via localhost.
+  # ---------------------------------------------------------------------------
+  on-the-runner:
+    name: Runner-hosted job
+    runs-on: ubuntu-latest
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome:126.0
+        # REQUIRED here. Without it the container listens only on the job's
+        # Docker network, which this job is not on, and every connection is
+        # refused with no indication that addressing is the problem.
+        ports:
+          - 4444:4444
+        options: >-
+          --shm-size=2g
+          --health-cmd "curl -f http://localhost:4444/wd/hub/status"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      # The health check has already passed by the time this runs, so no sleep
+      # and no retry loop is needed.
+      - name: Probe the grid via localhost
+        run: |
+          curl -sf http://localhost:4444/wd/hub/status \
+            | python -c "import json,sys; print('ready:', json.load(sys.stdin)['value']['ready'])"
+
+      - name: Show why the label does NOT resolve here
+        run: |
+          # Expected to fail: there is no DNS entry for `selenium` outside the
+          # job's Docker network. `|| true` keeps the step green so the contrast
+          # is visible in the log rather than ending the job.
+          curl -sf --max-time 5 http://selenium:4444/wd/hub/status \
+            && echo "unexpected: label resolved" \
+            || echo "expected: label does not resolve from a runner-hosted job"
+
+  # ---------------------------------------------------------------------------
+  # Job runs IN a container. No `ports:`; reached by service label.
+  # ---------------------------------------------------------------------------
+  in-a-container:
+    name: Container job
+    # Container jobs are Linux-only. Changing this to windows-latest fails.
+    runs-on: ubuntu-latest
+
+    container:
+      image: python:3.13-slim
+      # Chrome crashes on the default 64 MB /dev/shm; the symptom is a browser
+      # crash that looks random rather than a resource error.
+      options: --shm-size=2g
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome:126.0
+        # No `ports:` — publishing to the host would achieve nothing, because
+        # this job is already on the same network as the service.
+        env:
+          SE_NODE_MAX_SESSIONS: "2"
+        options: >-
+          --shm-size=2g
+          --health-cmd "curl -f http://localhost:4444/wd/hub/status"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # `curl` is not in python:3.13-slim. In a container job the tools are the
+      # IMAGE's, not the runner's — a "command not found" for something the
+      # runner normally has is the tell that you are inside a container.
+      - name: Install probe dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends curl > /dev/null
+
+      - name: Install suite dependencies
+        working-directory: your-solution-root-folder-name
+        run: |
+          # No setup-python step: the container image already supplies 3.13.
+          python --version
+          pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Probe the grid via the service label
+        run: |
+          curl -sf http://selenium:4444/wd/hub/status \
+            | python -c "import json,sys; print('ready:', json.load(sys.stdin)['value']['ready'])"
+
+      - name: Run BDD suite against the remote grid
+        working-directory: your-solution-root-folder-name
+        env:
+          SELENIUM_REMOTE_URL: http://selenium:4444/wd/hub
+          BASE_URL: https://your-domain.com
+        run: |
+          behave --tags=regression \
+            -D browser=chrome \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+      # Service container logs never appear in the job log on their own. Without
+      # this step a grid-side error is invisible and the failure looks like a
+      # test bug.
+      - name: Capture grid logs on failure
+        if: failure()
+        run: docker logs selenium || echo "Service logs unavailable in this job."
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-container-job
+          path: your-solution-root-folder-name/reports/allure-results/
+          retention-days: 30
+          if-no-files-found: error

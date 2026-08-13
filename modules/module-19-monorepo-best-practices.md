@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 18](./module-18-qa-automation.md) | [Next: Module 20](./module-20-notifications.md)
 > Level: **Advanced** | Time: **150 min** | Example workflow: [`module-19-monorepo-best-practices.yml`](../examples/module-19-monorepo-best-practices.yml)
+> Solutions: [`module-19-solutions.md`](../solutions/module-19-solutions.md)
 
 ## Learning Objectives
 
@@ -120,7 +121,7 @@ jobs:
       scripts: ${{ steps.filter.outputs.scripts }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -140,8 +141,8 @@ jobs:
     if: ${{ needs.detect-changes.outputs.pageobjects == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Run static analysis on page objects
@@ -155,7 +156,7 @@ jobs:
     if: ${{ needs.detect-changes.outputs.steps == 'true' }}
     runs-on: [self-hosted, server1]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Run Behave smoke on self-hosted runner
         run: behave --tags=@smoke -f allure_behave.formatter:AllureFormatter -o allure-results
 ```
@@ -191,8 +192,8 @@ jobs:
   pageobjects-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - run: pylint your-solution-root-folder-name/pageobjects/
@@ -215,7 +216,7 @@ jobs:
   pageobjects-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: echo "Run page object checks after a folder-scoped push"
 ```
 
@@ -262,7 +263,7 @@ jobs:
   smoke:
     runs-on: [self-hosted, "${{ inputs.runner }}"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Run Behave smoke
         run: behave --tags=@smoke -D browser=${{ inputs.browser }} -f allure_behave.formatter:AllureFormatter -o allure-results
       - name: Upload Allure results
@@ -274,6 +275,30 @@ jobs:
 
 The `runner` choice input is interpolated into the `runs-on` label list, so the operator selects server1..server4 without editing the workflow.
 
+## Quiz
+
+1. `behave-smoke` is a **required status check** on `main`, and the workflow uses `on: pull_request: paths: ['**/features/**']`. A pull request touching only `README.md` is blocked from merging forever. Why?
+   - **A.** Required checks ignore path filters, so the check ran and failed.
+   - **B.** The workflow never ran, so the required check has no result at all and stays pending — a filtered-out workflow does not report a status.
+   - **C.** Path filters are only honoured on `push`, never on `pull_request`.
+   - **D.** `README.md` is implicitly matched by `**/features/**`.
+
+2. What is the practical difference between `on.pull_request.paths` and `dorny/paths-filter@v3`?
+   - **A.** None; `paths-filter` is a deprecated reimplementation of the native filter.
+   - **B.** The native filter decides whether the **whole workflow** runs; `paths-filter` runs inside a job and produces outputs so individual jobs can be gated with `if:`.
+   - **C.** `paths-filter` works on `push` only.
+   - **D.** The native filter supports globs; `paths-filter` supports only literal paths.
+
+3. Which of these is the dangerous self-hosted runner pattern?
+   - **A.** `runs-on: [self-hosted, windows, server2]` on a workflow triggered by `push` to `main`.
+   - **B.** A `pull_request_target` workflow that checks out the fork's head SHA and runs it on `[self-hosted, server1]`.
+   - **C.** Using `workflow_dispatch` choice inputs to pick between `server1`..`server4`.
+   - **D.** Restricting a runner group to a single trusted repository.
+
+4. A shared helper `reusables/queries.py` is imported by both the page objects and the step files, but the `pageobjects` filter is the only one that lists it. Describe the failure this produces on a pull request that edits only `queries.py`, and how you would fix the filter definitions.
+
+5. A team wants "only run what changed" *and* reliable required checks. Explain the standard resolution — how do you keep a required check green on pull requests where the expensive job legitimately has nothing to do?
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -281,6 +306,8 @@ The `runner` choice input is interpolated into the `runs-on` label list, so the 
 | Beginner | Trigger workflow only for `your-solution-root-folder-name/pageobjects/**`. | Step-file changes do not run the workflow. |
 | Intermediate | Add path filters for `pageobjects/`, `features/steps/`, and `.github/scripts/`. | Only affected jobs (pylint/check-duplicate-variables, behave smoke) run. |
 | Challenge | Add a `workflow_dispatch` choice input to pick the self-hosted runner. | Behave smoke job targets the chosen `self-hosted` runner label (server1..server4). |
+
+Solutions: [`solutions/module-19-solutions.md`](../solutions/module-19-solutions.md)
 
 ---
 

@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 1](./module-01-ci-foundations.md) | [Next: Module 3](./module-03-workflow-triggers.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-02-workflow-naming.yml`](../examples/module-02-workflow-naming.yml)
+> Solutions: [`module-02-solutions.md`](../solutions/module-02-solutions.md)
 
 ## Learning Objectives
 
@@ -57,6 +58,14 @@ A smoke-test workflow runs both on a schedule and manually. Scheduled runs shoul
 - Forgetting that `run-name` expressions resolve at start, not per step.
 - Mixing `>` (folded, keeps a trailing newline) vs `>-` (folded, strips it) and getting odd spacing.
 - Putting a colon in plain text without quoting, breaking YAML.
+
+## Debugging Tips
+
+- A run titled with a dangling separator (`Smoke - `) means an expression resolved to an empty string — usually `inputs.*` on a `schedule` or `push` run. Add a `|| 'default'` fallback.
+- If the whole `run-name` is missing and the run shows the default event title, the expression resolved to nothing but whitespace.
+- A workflow that fails to load right after a `run-name` edit is almost always an unquoted `: ` in the value — quote the scalar or move the colon inside `format()`.
+- `run-name` is evaluated once at run creation, so echo the same expression in a step to see exactly what it resolved to.
+- Test title variants with `workflow_dispatch` rather than waiting for the real event.
 
 ## Naming Patterns Reference
 
@@ -160,6 +169,30 @@ Use `>-` for multi-line `run-name` expressions so the title has no trailing blan
 - Scheduled runs are titled `Daily Smoke Tests: Scheduled`.
 - Manual runs are titled from their inputs, e.g. `Smoke Tests - server1 | chrome | smoke`.
 
+## Quiz
+
+1. A workflow runs on both `schedule` and `workflow_dispatch` with `run-name: Smoke - ${{ inputs.browser }}`. What do the scheduled runs show in the run history?
+   - **A.** `Smoke - chrome`, because the input's `default` still applies.
+   - **B.** `Smoke - ` with nothing after the dash, because a scheduled run has no `inputs` context to read.
+   - **C.** The workflow fails to load, because `inputs` is undefined for `schedule`.
+   - **D.** The static `name` is shown instead, because `run-name` is skipped.
+
+2. Which `run-name` line is invalid YAML?
+   - **A.** `run-name: Smoke Tests - ${{ github.ref_name }}`
+   - **B.** `run-name: "Nightly: Scheduled"`
+   - **C.** `run-name: Nightly: Scheduled`
+   - **D.** `run-name: ${{ format('Nightly: {0}', github.ref_name) }}`
+
+3. What is the difference between `>-` and `>` as the block style for a multi-line `run-name`?
+   - **A.** `>-` folds newlines into spaces and strips the trailing newline; `>` folds but keeps a trailing newline, which can leave odd spacing in the title.
+   - **B.** `>-` preserves newlines literally; `>` folds them.
+   - **C.** `>-` allows `${{ }}` expressions; `>` does not.
+   - **D.** They are identical; `-` is decorative.
+
+4. A teammate wants `run-name` to say `Smoke Tests - PASSED` or `Smoke Tests - FAILED` depending on the suite result. Explain why that cannot work, and what they should do instead.
+
+5. Write a single `run-name` for a workflow triggered by `push`, `schedule`, and `workflow_dispatch` that reads `Regression - <branch>` for pushes, `Regression - Nightly` for scheduled runs, and `Regression - <tags>` for manual runs. Explain which expression features you used and why the manual case needs a fallback.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -167,6 +200,8 @@ Use `>-` for multi-line `run-name` expressions so the title has no trailing blan
 | Beginner | Add `run-name` that appends `github.ref_name`. | Run title includes the branch name. |
 | Intermediate | Build a `run-name` from two inputs with `||` fallbacks. | Run title shows the chosen or default values. |
 | Challenge | Use a folded `>-` expression to title runs differently for schedule vs manual. | Scheduled and manual runs show distinct titles. |
+
+Solutions: [`solutions/module-02-solutions.md`](../solutions/module-02-solutions.md)
 
 ---
 

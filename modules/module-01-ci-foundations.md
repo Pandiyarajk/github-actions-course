@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | Previous: none | [Next: Module 2](./module-02-workflow-naming.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-01-ci-foundations.yml`](../examples/module-01-ci-foundations.yml)
+> Solutions: [`module-01-solutions.md`](../solutions/module-01-solutions.md)
 
 ## Learning Objectives
 
@@ -117,10 +118,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -144,8 +145,8 @@ jobs:
 - `pull_request` runs checks before code is merged.
 - `branches: [main]` limits the trigger to pull requests targeting `main`.
 - `permissions: contents: read` applies least privilege.
-- `actions/checkout@v6` downloads the repository onto the runner.
-- `actions/setup-python@v6` with `python-version: "3.13"` provisions the interpreter the Behave/Selenium suite expects.
+- `actions/checkout@v7` downloads the repository onto the runner.
+- `actions/setup-python@v7` with `python-version: "3.13"` provisions the interpreter the Behave/Selenium suite expects.
 - The context step prints safe runtime metadata.
 - The validation step is where real Behave runs, `pylint`, or duplicate checks go.
 
@@ -155,6 +156,30 @@ jobs:
 - The job completes successfully.
 - Logs show repository, branch, and commit details, followed by the `behave --tags=smoke` scenario results.
 
+## Quiz
+
+1. You add `.github/workflow/ci.yml` (note the singular directory name) with a valid `on: push` trigger, commit it, and push. Nothing appears in the Actions tab. Why?
+   - **A.** The workflow needs a `workflow_dispatch` trigger before GitHub will register it.
+   - **B.** Only files under `.github/workflows/` are read as workflows, so the file is ignored entirely.
+   - **C.** GitHub caches the workflow list for 24 hours.
+   - **D.** The file must be named `main.yml`.
+
+2. Which of these is the unit that owns a runner?
+   - **A.** A step.
+   - **B.** A job.
+   - **C.** An action.
+   - **D.** The workflow.
+
+3. A workflow file exists on your feature branch with `on: pull_request: branches: [main]`. You push a commit to that feature branch. Does the workflow run?
+   - **A.** Yes — pushing to any branch fires the workflow.
+   - **B.** Yes, but only after the branch is merged.
+   - **C.** No — no `push` trigger is declared, so a push alone matches no event; a PR targeting `main` is required.
+   - **D.** No — workflows never run from non-default branches.
+
+4. Explain the difference between `run:` and `uses:` inside a `steps:` list, and give one reason you would prefer `uses: actions/setup-python@v7` over a `run:` block that installs Python itself.
+
+5. In the production example, `permissions: contents: read` is declared at the top of the workflow. Explain what that changes about the job's `GITHUB_TOKEN`, and why declaring it explicitly is safer than leaving it out.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -162,6 +187,8 @@ jobs:
 | Beginner | Create a workflow that prints your name. | Successful workflow with one log line. |
 | Intermediate | Trigger the workflow on both `push` and `pull_request`, set up Python 3.13, and run `behave --tags=smoke`. | Workflow runs for both events and executes the smoke suite. |
 | Challenge | Add a manual `workflow_dispatch` trigger with an input called `browser` (chrome/firefox/msedge). | Manual run accepts a browser value used by the Selenium suite. |
+
+Solutions: [`solutions/module-01-solutions.md`](../solutions/module-01-solutions.md)
 
 ---
 
