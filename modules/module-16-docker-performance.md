@@ -36,6 +36,23 @@ Docker Compose packages a Selenium Grid into boxes that run the same way everywh
 
 Docker Compose workflows start a Selenium Grid (a `selenium/hub` container plus `chrome`/`firefox` node containers), run Behave tests against the grid hub URL, and tear the grid down afterwards. Artifacts preserve outputs like Allure results, screenshots, and logs. Caching reduces runtime by restoring pip packages keyed on `requirements.txt`. Performance optimization includes dependency caching, parallel browser nodes, selective triggers, and avoiding unnecessary work.
 
+Two facts about the Actions cache decide whether caching actually helps. A cache
+entry is **immutable once written** — a key that already exists is never
+overwritten, so a key with no `hashFiles()` component is populated once and then
+serves stale content forever. And the cache is **branch-scoped**: a branch reads
+its own cache plus the default branch's, but writes only its own, so the first run
+on a new branch is always a partial restore at best. Entries unused for 7 days are
+evicted, and the repository's total budget is 10 GB, shared with every other cache
+including Docker layer caches.
+
+> [!NOTE]
+> This module covers **caching and performance**. The container side of the topic
+> now has dedicated modules: running jobs in containers with service dependencies
+> is [Module 22](./module-22-container-jobs.md) — including the native `services:`
+> alternative to the Docker Compose grid used here — and building and publishing
+> images with `type=gha` layer caching is [Module 23](./module-23-docker-publish.md).
+> Cost implications of a wide matrix are covered in [Module 26](./module-26-local-testing-cost.md).
+
 ## Real-World Use Case
 
 In a real-world web automation suite, the daily smoke suite runs Selenium + Behave against a Selenium Grid so chrome and firefox checks execute in parallel on GitHub-hosted runners, and page-load timing data (`page_load_times`) is captured for every run.
