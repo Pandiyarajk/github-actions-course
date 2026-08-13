@@ -1,0 +1,136 @@
+# =============================================================================
+# Composite action: prepare a Python BDD/Selenium test suite on a runner
+#
+# This is a REAL action, used by this repository's own CI
+# (.github/workflows/validate.yml), not a illustrative stub. It factors out the
+# setup-python + dependency-install preamble that appears in roughly fifteen of
+# the course's example workflows.
+#
+# Two things about it are worth studying, because neither is obvious:
+#
+# 1. It does NOT run actions/checkout, even though every caller needs a
+#    checkout first. A local action referenced as `uses: ./.github/actions/...`
+#    is loaded from the runner's filesystem, so the repository must ALREADY be
+#    checked out for this file to exist at all. An action cannot perform the
+#    checkout that makes the action itself available.
+#
+# 2. Every `run:` step in a composite action MUST declare `shell:`. In a
+#    workflow the shell defaults per-runner; in a composite action it is
+#    required, and omitting it fails at load time with a validation error rather
+#    than at the step.
+#
+# See Module 21 for when to reach for this versus a reusable workflow.
+# =============================================================================
+name: Set up Python test suite
+description: >-
+  Provision Python, restore the pip cache and install a Behave/Selenium suite's
+  dependencies. Assumes the repository is already checked out.
+
+inputs:
+  python-version:
+    description: "Python version to provision."
+    required: false
+    default: "3.13"
+  working-directory:
+    description: >-
+      Directory holding the suite's requirements file. Defaults to the
+      repository root.
+    required: false
+    default: "."
+  requirements-file:
+    description: "Requirements file name, relative to working-directory."
+    required: false
+    default: "requirements.txt"
+  extra-packages:
+    description: >-
+      Space-separated packages to install in addition to the requirements file.
+      Useful for reporting extras that are not a suite dependency.
+    required: false
+    default: ""
+  enable-cache:
+    description: >-
+      Whether to use setup-python's built-in pip cache. Set to "false" on a
+      self-hosted runner with a persistent pip cache of its own.
+    required: false
+    default: "true"
+
+outputs:
+  python-version:
+    description: "The exact Python version that was installed."
+    value: ${{ steps.setup.outputs.python-version }}
+  cache-hit:
+    description: >-
+      "true" when the pip cache was restored. Note this is a STRING, not a
+      boolean -- all action outputs are strings, so compare against 'true'
+      rather than using it directly in an `if:`.
+    value: ${{ steps.setup.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    # `setup-python`'s `cache: pip` FAILS THE STEP if its dependency path matches
+    # nothing -- it does not warn and continue. So the file has to be detected
+    # before `setup-python` runs, not handled afterwards. Caching is skipped
+    # entirely when there is nothing to key the cache on.
+    - name: Detect requirements file
+      id: detect
+      shell: bash
+      run: |
+        path="${{ inputs.working-directory }}/${{ inputs.requirements-file }}"
+        if [ -f "$path" ]; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+          echo "path=${path}" >> "$GITHUB_OUTPUT"
+        else
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+          echo "path=" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Set up Python ${{ inputs.python-version }}
+      id: setup
+      uses: actions/setup-python@v7
+      with:
+        python-version: ${{ inputs.python-version }}
+        # `cache: pip` is cheaper than a manual actions/cache step: it derives
+        # the key from the requirements file for you. Both values are expressions
+        # rather than `if:` conditions, because `cache:` takes a value and an
+        # empty string means "no caching".
+        cache: ${{ (inputs.enable-cache == 'true' && steps.detect.outputs.exists == 'true') && 'pip' || '' }}
+        cache-dependency-path: ${{ steps.detect.outputs.path }}
+
+    - name: Install suite dependencies
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        REQUIREMENTS_FILE: ${{ inputs.requirements-file }}
+        EXTRA_PACKAGES: ${{ inputs.extra-packages }}
+      run: |
+        python -m pip install --upgrade pip --disable-pip-version-check
+
+        if [ "${{ steps.detect.outputs.exists }}" = "true" ]; then
+          pip install --disable-pip-version-check -r "${REQUIREMENTS_FILE}"
+        else
+          # A missing requirements file is a notice rather than an error so the
+          # action stays usable in a repo that installs its deps another way --
+          # including this one, whose CI only needs `extra-packages`.
+          echo "No ${REQUIREMENTS_FILE} in $(pwd); installing extra packages only."
+        fi
+
+        if [ -n "${EXTRA_PACKAGES}" ]; then
+          # Unquoted on purpose: word-splitting is what turns the space-separated
+          # input into separate package arguments.
+          # shellcheck disable=SC2086
+          pip install --disable-pip-version-check ${EXTRA_PACKAGES}
+        fi
+
+    - name: Report environment
+      shell: bash
+      run: |
+        {
+          echo "### Python suite environment"
+          echo
+          echo "| Field | Value |"
+          echo "| --- | --- |"
+          echo "| Python | $(python --version 2>&1) |"
+          echo "| pip | $(pip --version | cut -d' ' -f2) |"
+          echo "| Cache restored | ${{ steps.setup.outputs.cache-hit || 'n/a' }} |"
+        } >> "$GITHUB_STEP_SUMMARY"

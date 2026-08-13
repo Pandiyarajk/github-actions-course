@@ -79,7 +79,7 @@ jobs:
     timeout-minutes: 240
     steps:
       - name: Checkout tests
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run selected suite
         shell: pwsh
@@ -140,7 +140,7 @@ jobs:
       API_TOKEN: ${{ secrets.API_TOKEN }}
     steps:
       - name: Checkout tests
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Prepare runner
         shell: pwsh

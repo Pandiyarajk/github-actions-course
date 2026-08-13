@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 10](./module-10-artifacts.md) | [Next: Module 12](./module-12-workflow-syntax.md)
 > Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-11-misc-features.yml`](../examples/module-11-misc-features.yml)
+> Solutions: [`module-11-solutions.md`](../solutions/module-11-solutions.md)
 
 ## Learning Objectives
 
@@ -65,6 +66,15 @@ A nightly health-check workflow uses `concurrency: { group: health-check, cancel
 - Using `needs` outputs without declaring them in the producer job's `outputs`.
 - Granting `write-all` instead of the specific scope needed.
 - Expecting a `summary` job to run after failures without `if: always()`.
+
+## Debugging Tips
+
+- A run stuck in *Pending* with no runner message is usually waiting on its `concurrency` group — open the other run holding the group.
+- A job that "never runs" is almost always **skipped**, not failed: check its `if:` and remember that `success()` is implied through `needs`.
+- An empty `needs.<job>.outputs.<key>` means the producing job did not declare the value in its `outputs:` block, or its step is missing an `id:`.
+- Echo boolean-looking outputs before comparing them; they are strings, so `== 'true'` is the only reliable test.
+- A resource-not-accessible error from an API call is a `permissions` problem — widen the specific scope on that job, not the whole workflow.
+- Add an `if: always()` summary step that prints every `needs.<job>.result` value; it makes skip-versus-fail obvious on the run page.
 
 ## Feature Reference
 
@@ -210,6 +220,30 @@ summary:
 - `publish` runs only on `main` and waits for production approval.
 - `summary` always runs and reports each job's result.
 
+## Quiz
+
+1. A deploy workflow must never be interrupted mid-deploy, but overlapping triggers must not run at the same time either. Which `concurrency` block is correct?
+   - **A.** `group: deploy` with `cancel-in-progress: true`.
+   - **B.** `group: deploy` with `cancel-in-progress: false`.
+   - **C.** No `concurrency` block — GitHub already serialises deploys.
+   - **D.** `group: ${{ github.run_id }}` with `cancel-in-progress: true`.
+
+2. A `summary` job has `needs: [lint, test]` and no `if:`. The `test` job fails. What does `summary` do?
+   - **A.** It runs and reports the failure, because `needs` only controls ordering.
+   - **B.** It is skipped, because `success()` is implied on every job and step.
+   - **C.** It fails immediately with a dependency error.
+   - **D.** It runs, but `needs.test.result` is empty.
+
+3. A producer job sets `should_deploy` to the value of `github.ref_name == 'main'`. The consumer writes `if: needs.setup.outputs.should_deploy`. On a feature branch the consumer job still runs. Why?
+   - **A.** `needs` outputs are only readable inside steps, so the job-level `if:` is ignored.
+   - **B.** The output is the string `"false"`, and any non-empty string is truthy in an Actions expression.
+   - **C.** `github.ref_name` returns `refs/heads/<branch>`, so the comparison produced `true`.
+   - **D.** Job-level `if:` requires the `${{ }}` wrapper to be evaluated at all.
+
+4. A downstream job reads `needs.setup.outputs.run_label` and gets an empty string, with no error anywhere in the logs. Describe the two-hop wiring a job output requires and which hop is usually missing.
+
+5. A Behave matrix runs `chrome`, `firefox`, and `msedge` on self-hosted runners labelled `server1`–`server4`, only two of which are free during the day. Explain what `fail-fast` and `max-parallel` each control, and give the values you would set here.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -217,6 +251,8 @@ summary:
 | Beginner | Add a `concurrency` group with `cancel-in-progress: false`. | A second run queues behind the first. |
 | Intermediate | Add a producer job output and consume it in a downstream job. | Downstream job reads the output value. |
 | Challenge | Add a matrix with `fail-fast: false` + `max-parallel`, and an `if: always()` summary using `needs.<job>.result`. | All matrix entries run; summary reports results even on failure. |
+
+Solutions: [`solutions/module-11-solutions.md`](../solutions/module-11-solutions.md)
 
 ---
 

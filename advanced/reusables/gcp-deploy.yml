@@ -49,7 +49,9 @@ jobs:
 
       - name: Emit summary
         run: |
-          echo "### GCP deployment" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Service: ${{ inputs.service }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Region: ${{ inputs.region }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Image: ${{ inputs.image }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### GCP deployment"
+            echo "- Service: ${{ inputs.service }}"
+            echo "- Region: ${{ inputs.region }}"
+            echo "- Image: ${{ inputs.image }}"
+          } >> "$GITHUB_STEP_SUMMARY"

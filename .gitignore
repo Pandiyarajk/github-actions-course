@@ -1,2 +1,41 @@
-# Claude Code project rules — keep local, do not publish
+# Local Claude rules — keep local, do not publish
 CLAUDE.md
+
+# Secrets supplied to `act` for local workflow runs (Module 26). Never commit.
+.secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Test and report output produced by the example suites
+reports/
+allure-results/
+allure-report/
+screenshots/
+*.log
+
+# actionlint binary, downloaded by the validate workflow and by learners
+actionlint
+actionlint.exe
+actionlint.tar.gz
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*~

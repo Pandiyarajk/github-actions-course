@@ -16,7 +16,7 @@ jobs:
       features: ${{ steps.filter.outputs.features }}
       scripts: ${{ steps.filter.outputs.scripts }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Map paths to test areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -35,9 +35,9 @@ jobs:
     if: ${{ needs.detect-changes.outputs.pageobjects == 'true' || needs.detect-changes.outputs.features == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install analysis tools
@@ -52,9 +52,9 @@ jobs:
     if: ${{ needs.detect-changes.outputs.features == 'true' }}
     runs-on: server4
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install BDD tools
@@ -70,7 +70,7 @@ jobs:
     if: ${{ needs.detect-changes.outputs.scripts == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Lint shared automation scripts
         run: |
           pip install pylint

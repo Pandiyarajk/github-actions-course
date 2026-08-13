@@ -1,0 +1,155 @@
+# =============================================================================
+# Course self-validation
+#
+# This is the only workflow in this repository that is NOT teaching material --
+# it is the repo's real CI. It validates the ~28 example workflows and 35+
+# markdown documents that ARE the teaching material, so a broken example or a
+# stale action version cannot reach a learner.
+#
+# It is also, deliberately, a worked example of several things the course
+# teaches: least-privilege `permissions`, `concurrency` with
+# `cancel-in-progress`, a job matrix, `$GITHUB_STEP_SUMMARY` reporting, and a
+# local composite action (see Module 21).
+# =============================================================================
+name: Validate Course Content
+
+run-name: >-
+  Validate ${{ github.ref_name }} by @${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege: this workflow only ever reads the repository.
+permissions:
+  contents: read
+
+# A second push to the same branch makes the first run's result irrelevant.
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.13"
+  # Pinned so a new actionlint release cannot turn a green branch red without a
+  # deliberate bump. See skill `action-version-review`.
+  ACTIONLINT_VERSION: "1.7.12"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Syntax: are the example workflows valid GitHub Actions files at all?
+  # ---------------------------------------------------------------------------
+  lint-workflows:
+    name: Lint workflow YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # Uses this repo's own composite action rather than setup-python directly,
+      # so Module 21's teaching example is proven by the CI that validates the
+      # course rather than merely asserted to work. Note the checkout above must
+      # come first -- see the comment in the action itself.
+      - name: Set up Python suite
+        uses: ./.github/actions/setup-python-suite
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          extra-packages: yamllint
+
+      # actionlint is installed from its released binary rather than via a
+      # third-party action: one less action to pin, and the version is explicit.
+      - name: Install actionlint
+        run: |
+          base="https://github.com/rhysd/actionlint/releases/download"
+          asset="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL "${base}/v${ACTIONLINT_VERSION}/${asset}" -o actionlint.tar.gz
+          tar -xzf actionlint.tar.gz actionlint
+          ./actionlint --version
+
+      # No `--strict`: that promotes warnings to errors, and the warnings left in
+      # this repo are unavoidable long expressions rather than defects. Errors
+      # (syntax, indentation, duplicate keys) still fail the job.
+      - name: Lint YAML formatting
+        run: yamllint .
+
+      # The course's example workflows reference repositories and secrets that
+      # only exist in a learner's own repo, so shellcheck/pyflakes integration
+      # is left off and only workflow-schema problems are treated as errors.
+      - name: Lint this repository's own workflows
+        run: ./actionlint -color .github/workflows/*.yml
+
+      - name: Lint example workflows
+        run: ./actionlint -color examples/*.yml advanced/*.yml advanced/reusables/*.yml
+
+  # ---------------------------------------------------------------------------
+  # Policy: do the examples match the versions and conventions the course claims
+  # to teach? Runs each check as its own matrix leg so a failure names itself in
+  # the Actions UI without anyone opening the logs.
+  # ---------------------------------------------------------------------------
+  validate-content:
+    name: Check ${{ matrix.check }}
+    runs-on: ubuntu-latest
+    strategy:
+      # Every check should report, not just the first one to fail.
+      fail-fast: false
+      matrix:
+        check:
+          - pins
+          - mutable
+          - yaml-blocks
+          - links
+          - structure
+          - pairing
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # PyYAML is required by the `yaml-blocks` check, which parses every fenced
+      # YAML block in the documentation.
+      - name: Set up Python suite
+        uses: ./.github/actions/setup-python-suite
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          extra-packages: pyyaml
+
+      - name: Run ${{ matrix.check }} check
+        run: python scripts/validate_course.py --check ${{ matrix.check }}
+
+  # ---------------------------------------------------------------------------
+  # Single aggregating check. Branch protection should require only THIS job.
+  #
+  # Requiring the individual matrix legs directly would be fragile: a `skipped`
+  # required check does not block a merge, and renaming a leg silently detaches
+  # the protection rule. `if: always()` is what makes this job still run -- and
+  # still fail -- when an upstream job fails. See Module 25.
+  # ---------------------------------------------------------------------------
+  gate:
+    name: Validation gate
+    if: always()
+    needs: [lint-workflows, validate-content]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify upstream results
+        env:
+          LINT_RESULT: ${{ needs.lint-workflows.result }}
+          CONTENT_RESULT: ${{ needs.validate-content.result }}
+        run: |
+          failed=0
+          for pair in "lint-workflows:$LINT_RESULT" "validate-content:$CONTENT_RESULT"; do
+            name="${pair%%:*}"
+            result="${pair#*:}"
+            case "$result" in
+              success|skipped)
+                echo "ok       $name ($result)"
+                ;;
+              *)
+                echo "::error::$name concluded '$result'"
+                failed=1
+                ;;
+            esac
+          done
+          exit "$failed"

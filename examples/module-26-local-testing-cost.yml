@@ -1,0 +1,204 @@
+# =============================================================================
+# Module 26: Workflow linting and cost control
+#
+# Two jobs, both cheap on purpose:
+#
+#   lint                 yamllint + actionlint + the repo's own pin check, over
+#                        a deliberately COARSE 2-leg matrix.
+#   report-cost-shape    writes the run's billing profile to the step summary.
+#
+# The teaching point is that a workflow's cost is a property of its SHAPE, not
+# of how much work it does, and four shape decisions below are the levers:
+#
+#   * `concurrency` + `cancel-in-progress: true` -- stops paying for runs that a
+#     newer push has already superseded. This is a cost control first and a
+#     latency control second.
+#   * `timeout-minutes` on EVERY job -- the default is 360 minutes, so one hung
+#     job bills six hours before anyone notices.
+#   * A 2-leg matrix instead of one leg per file -- billing rounds UP per JOB.
+#     Twelve 15-second jobs bill twelve minutes, not three.
+#   * `paths:` on the trigger -- unrelated commits do not pay for this gate.
+#
+# Gotchas:
+#
+#   1. actionlint is installed from its PINNED release binary, not via a
+#      third-party action. Two reasons: an unpinned linter turns a green branch
+#      red with no change of yours, and a third-party action is one more supply
+#      chain edge to SHA-pin and audit (Module 24) for something a two-line curl
+#      already does.
+#   2. actionlint has NO OPINION on version currency. `actions/checkout@v3`
+#      lints perfectly clean. The pin table is enforced by a separate step.
+#   3. `repository_dispatch` exists because GITHUB_TOKEN pushes do not trigger
+#      workflows, so cross-repo chaining needs an explicit event.
+name: module-26-local-testing-cost
+
+on:
+  pull_request:
+    # Cost control at the cheapest possible point: a commit that touches neither
+    # workflows nor examples never starts a runner at all.
+    paths:
+      - ".github/**"
+      - "examples/**"
+      - ".yamllint"
+      - "scripts/validate_course.py"
+  workflow_dispatch:
+  # Lets another repository ask for this gate:
+  #   gh api repos/<owner>/<repo>/dispatches \
+  #     -f event_type=validate-workflows \
+  #     -F 'client_payload[reason]=downstream bump'
+  # Treat everything in client_payload as untrusted input.
+  repository_dispatch:
+    types: [validate-workflows]
+
+# A linter reads files and nothing else.
+permissions:
+  contents: read
+
+concurrency:
+  # COST CONTROL, not just tidiness. Someone iterating on a workflow pushes five
+  # times in ten minutes; without this you are billed for all five runs, four of
+  # which no longer describe the branch.
+  group: module-26-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned so a bump is a visible one-line diff in review. An unpinned linter is
+  # a third party with commit-free power to break your default branch.
+  ACTIONLINT_VERSION: "1.7.12"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Deliberately COARSE matrix: two legs by directory, NOT one leg per file.
+  #
+  # Runner minutes are rounded up per job. A leg per file would turn a 40-second
+  # lint into one billed minute per file for identical coverage -- the classic
+  # way a "more parallel" refactor makes a workflow several times dearer.
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint ${{ matrix.target }}
+    # ubuntu-latest is the 1x baseline. windows-latest would bill this same work
+    # at 2x and macos-latest at 10x, for no benefit to a text linter.
+    runs-on: ubuntu-latest
+    # Realistic cap against the 360-minute default. A linter that runs longer
+    # than this is hung, not busy.
+    timeout-minutes: 10
+    strategy:
+      # Both legs should report. Stopping the second leg on the first leg's
+      # finding just means two pushes to learn what one could have told you.
+      fail-fast: false
+      matrix:
+        target:
+          - .github/workflows
+          - examples
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python suite
+        uses: ./.github/actions/setup-python-suite
+        with:
+          python-version: "3.13"
+          # No requirements file at the repo root, so the linters come in as
+          # extras. `enable-cache` stays on: a cache hit is minutes saved, which
+          # is the cheapest cost lever available.
+          extra-packages: yamllint pylint
+          enable-cache: "true"
+
+      - name: Install pinned actionlint
+        run: |
+          base="https://github.com/rhysd/actionlint/releases/download"
+          asset="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL "${base}/v${ACTIONLINT_VERSION}/${asset}" -o actionlint.tar.gz
+          tar -xzf actionlint.tar.gz actionlint
+          ./actionlint -version
+
+      # yamllint first: it catches the structural defects (indentation, a
+      # duplicate key, a `#` swallowed inside a plain scalar) that would make
+      # actionlint's schema errors unreadable.
+      - name: Run yamllint
+        run: yamllint "${{ matrix.target }}"
+
+      # actionlint then checks what a YAML linter cannot see: `${{ }}` expressions
+      # against real context types, `needs:` referring to a job that exists,
+      # `runs-on` labels, and shellcheck over every `run:` block. Output is
+      # file:line:col -- the column is what locates an expression error.
+      - name: Run actionlint
+        run: ./actionlint -color "${{ matrix.target }}"/*.yml
+
+      # actionlint has NO OPINION on whether a version is CURRENT -- @v3 lints
+      # clean forever. Version currency is a separate audit, enforced here from
+      # the repo's own pin table, and it is also why Dependabot alone is not
+      # enough: Dependabot scans only .github/workflows/, so every `uses:` under
+      # examples/ is invisible to it.
+      - name: Enforce pinned and non-mutable action versions
+        # Only once. Running the same repo-wide check on both legs would pay for
+        # it twice and tell you the same thing.
+        if: matrix.target == '.github/workflows'
+        run: python scripts/validate_course.py --check pins --check mutable
+
+      # `act` cannot run in CI (it needs Docker-in-Docker and its own images),
+      # so the local loop is documented rather than executed. What act does NOT
+      # reproduce is the part worth remembering: no GITHUB_TOKEN is minted,
+      # secrets must come from --secret-file, caching/OIDC/service containers are
+      # partial at best, and Windows and macOS runners are unsupported entirely.
+      - name: Print the local reproduction commands
+        if: always()
+        env:
+          LINT_TARGET: ${{ matrix.target }}
+        run: |
+          {
+            echo "### Reproduce this leg locally"
+            echo
+            echo '```bash'
+            echo "yamllint ${LINT_TARGET}"
+            echo "actionlint ${LINT_TARGET}/*.yml"
+            echo "act -l                       # what act thinks exists"
+            echo "act pull_request -j lint --secret-file .secrets"
+            echo '```'
+            echo
+            echo "Keep \`.secrets\` in .gitignore."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Cost reporting. `if: always()` so the profile is recorded even when linting
+  # failed -- a failing run still costs money, and that is when you look.
+  # ---------------------------------------------------------------------------
+  report-cost-shape:
+    name: Report cost shape
+    needs: lint
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Summarise the billing profile
+        env:
+          LINT_RESULT: ${{ needs.lint.result }}
+          ACTIONLINT_PIN: ${{ env.ACTIONLINT_VERSION }}
+        run: |
+          {
+            echo "## Cost shape of this run"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Lint outcome | ${LINT_RESULT} |"
+            echo "| actionlint | v${ACTIONLINT_PIN} (pinned binary) |"
+            echo "| Runner | ubuntu-latest |"
+            echo "| Billed jobs | 3 (2 lint legs + this one) |"
+            echo "| Rounding | per job, UP to a whole minute |"
+            echo "| Job timeout | 10 / 5 min, vs the 360 min default |"
+            echo "| Superseded runs | cancelled by concurrency |"
+            echo
+            echo "### Multipliers for identical wall-clock time"
+            echo
+            echo "| Runner | Rate |"
+            echo "| --- | --- |"
+            echo "| ubuntu-latest | 1x (baseline) |"
+            echo "| windows-latest | 2x |"
+            echo "| macos-latest | 10x |"
+            echo "| self-hosted (server1-server4) | 0 billed minutes |"
+            echo
+            echo "So the largest single saving available to most workflows is"
+            echo "moving a job off macOS or Windows, followed by narrowing a"
+            echo "matrix. A leg per file here would have billed 20+ minutes for"
+            echo "the same two minutes of actual linting."
+          } >> "$GITHUB_STEP_SUMMARY"

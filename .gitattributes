@@ -1,0 +1,23 @@
+# Normalize line endings so the repo is byte-identical regardless of the
+# contributor's platform. Without this, a Windows checkout can commit CRLF into
+# YAML that then fails `yamllint` on the Linux runners in CI.
+#
+# Author: Pandiyaraj Karuppasamy
+# Date: Aug-13-2026
+
+# Default: normalize to LF in the repository, convert on checkout per platform.
+* text=auto eol=lf
+
+# Files consumed by Linux runners must be LF regardless of local settings --
+# a shell script with CRLF fails with a confusing "bad interpreter" error.
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sh    text eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
+
+# Windows-only scripts keep CRLF; PowerShell tolerates either, but native tools
+# on Windows are happier with CRLF.
+*.ps1   text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf

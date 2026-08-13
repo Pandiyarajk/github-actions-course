@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 9](./module-09-running-scripts.md) | [Next: Module 11](./module-11-misc-features.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-10-artifacts.yml`](../examples/module-10-artifacts.yml)
+> Solutions: [`module-10-solutions.md`](../solutions/module-10-solutions.md)
 
 ## Learning Objectives
 
@@ -35,7 +36,7 @@ An artifact is a box you pack at the end of a run so you can open it later. You 
 
 ## Technical Explanation
 
-`actions/upload-artifact` saves files from the runner to GitHub storage. `path` accepts a single file, a folder (structure preserved), or multiple lines with globs. `name` is the artifact name; downloads always arrive as `name.zip`. `retention-days` sets how long GitHub keeps it (repository default, up to 90 days). `compression-level` (0–9) trades speed for size. `if-no-files-found` chooses `error`/`warn`/`ignore` when nothing matches. Because each upload is its own step, you can produce several artifacts per job and gate each with `if:` — `success()` (default behavior), `always()` (even on failure), or `failure()` (only on failure). Use `always()` for evidence you must keep regardless of outcome.
+`actions/upload-artifact` saves files from the runner to GitHub storage. `path` accepts a single file, a folder (structure preserved), or multiple lines with globs. `name` is the artifact name; downloads always arrive as `name.zip`. `retention-days` sets how long GitHub keeps it (repository default, up to 90 days). `compression-level` (0–9) trades speed for size. `if-no-files-found` chooses what happens when nothing matches: `warn` (the default — a warning and a green step), `error`, or `ignore`. Because each upload is its own step, you can produce several artifacts per job and gate each with `if:` — `success()` (default behavior), `always()` (even on failure), or `failure()` (only on failure). Use `always()` for evidence you must keep regardless of outcome.
 
 ## Real-World Use Case
 
@@ -57,9 +58,17 @@ A nightly BDD job uploads the Allure results folder for 30 days, the screenshots
 
 - Expecting a raw folder instead of a `.zip` on download.
 - Using only `if: success()` and losing evidence when the run fails.
-- Letting `if-no-files-found: error` (the default) fail the step when a path is empty.
+- Relying on the default `if-no-files-found: warn` for evidence you actually need. A path that matches nothing produces a warning and a green step, so a missing Allure report reads as "the run was fine". Set `error` for anything the run is supposed to prove.
 - Reusing the same artifact `name` across steps (names must be unique per run).
 - Packaging sensitive files into the artifact.
+
+## Debugging Tips
+
+- "No files were found with the provided path" means the glob matched nothing, not that the upload failed — add `ls -R reports/` before the upload step to see what actually exists on the runner.
+- Paths are relative to the workspace root unless the step sets `working-directory`, so a report written inside `your-solution-root-folder-name/` needs that prefix in `path:`.
+- If a download lands one directory per artifact instead of a flat tree, you are missing `merge-multiple: true` on `actions/download-artifact@v8`.
+- A duplicate-name upload failure is a naming bug, not a transient error: add a matrix value or the run attempt to make each artifact name unique.
+- Check the artifact size on the run page; an unexpectedly large zip usually means `path:` captured the whole workspace instead of the report folder.
 
 ## Options Reference
 
@@ -69,7 +78,7 @@ A nightly BDD job uploads the Allure results folder for 30 days, the screenshots
 | `path` | File, folder, or multiple paths/globs | single line or `\|` block |
 | `retention-days` | How long to keep it | 1–90 (repo default if omitted) |
 | `compression-level` | Zip compression | 0 (store) … 9 (smallest); default 6 |
-| `if-no-files-found` | When nothing matches | `error` (default), `warn`, `ignore` |
+| `if-no-files-found` | When nothing matches | `warn` (default), `error`, `ignore` |
 | `overwrite` | Replace an existing artifact of the same name | `true` / `false` |
 
 ### Conditional upload patterns
@@ -200,6 +209,30 @@ Pair `if: always()` with a step that has `continue-on-error: true` so the upload
 - Folder artifacts preserve their internal structure inside the zip.
 - On a failed run, `evidence-always` and `failure-debug` are still uploaded; `success-report` is skipped.
 
+## Quiz
+
+1. A three-browser matrix uploads its Allure results with `name: allure-results` in every leg. What happens?
+   - **A.** The three uploads merge into one artifact containing all three folders.
+   - **B.** The last leg to finish silently wins and overwrites the others.
+   - **C.** The second and third uploads fail — an artifact is immutable once created, so a name can only be uploaded once per run.
+   - **D.** GitHub renames them automatically to `allure-results-1`, `-2`, `-3`.
+
+2. Screenshots must be collected for triage whether the Behave suite passed or failed. Which condition belongs on the upload step?
+   - **A.** `if: success()`
+   - **B.** `if: always()`
+   - **C.** `if: failure()`
+   - **D.** No `if:` at all — uploads are unconditional by default.
+
+3. Which of these is **not** an output of `actions/upload-artifact`?
+   - **A.** `artifact-id`
+   - **B.** `artifact-url`
+   - **C.** `artifact-digest`
+   - **D.** `artifact-name`
+
+4. A later job must collect the Allure results from all three matrix legs into one directory before generating a report. Show the `upload-artifact` naming and the `download-artifact` configuration that makes this work.
+
+5. The screenshots folder only exists when a scenario fails, so the screenshots upload sometimes matches nothing. List the values `if-no-files-found` accepts, say which one is the default, and state which you would choose for the screenshots upload and which for the Allure results upload.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -207,6 +240,8 @@ Pair `if: always()` with a step that has `continue-on-error: true` so the upload
 | Beginner | Upload a single file with `retention-days: 7`. | Artifact appears and expires in 7 days. |
 | Intermediate | Upload a folder and a multi-path artifact in the same job. | Two named artifacts with the right contents. |
 | Challenge | Add `if: always()` and `if: failure()` uploads behind a step that can fail. | Evidence uploads on failure; success-only upload is skipped. |
+
+Solutions: [`solutions/module-10-solutions.md`](../solutions/module-10-solutions.md)
 
 ---
 

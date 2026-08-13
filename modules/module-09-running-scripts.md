@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 8](./module-08-env-and-secrets.md) | [Next: Module 10](./module-10-artifacts.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-09-running-scripts.yml`](../examples/module-09-running-scripts.yml)
+> Solutions: [`module-09-solutions.md`](../solutions/module-09-solutions.md)
 
 ## Learning Objectives
 
@@ -108,7 +109,7 @@ The full example covers every common pattern across Linux and Windows runners: a
 
 ```yaml
 - name: Set up Python
-  uses: actions/setup-python@v6
+  uses: actions/setup-python@v7
   with:
     python-version: "3.13"
 
@@ -209,6 +210,30 @@ You can also set `shell: python` to make the whole `run:` block a Python script:
 - The shell script prints its check steps.
 - The `cmd` and PowerShell steps list files on the Windows runner.
 
+## Quiz
+
+1. A step on a `windows-latest` runner has no `shell:` key. Which interpreter runs its `run:` block?
+   - **A.** `bash`, because GitHub normalises every runner to bash.
+   - **B.** `cmd`, because that is the native Windows shell.
+   - **C.** PowerShell (`pwsh`), the Windows default.
+   - **D.** Whatever `defaults.run.shell` says — there is no built-in default.
+
+2. A heredoc block feeds Python a line containing `$HOME`, and Python must receive the four characters `$HOME` unchanged. Which marker do you write?
+   - **A.** `python - <<HOME`
+   - **B.** `python - <<'PY'` — quoting the marker stops the shell expanding `$`.
+   - **C.** `python - <<PY` — the shell never expands inside a heredoc.
+   - **D.** `python - <<"PY"` is required; single quotes are invalid heredoc syntax.
+
+3. A `run:` step calls a Python script that finishes with `sys.exit(1)`. What happens to the job?
+   - **A.** The step is marked failed and the job stops there unless `continue-on-error: true` is set.
+   - **B.** The step passes; only an uncaught exception fails a step.
+   - **C.** The step is marked "skipped" and later steps still run.
+   - **D.** Nothing — exit codes only matter for the last step in a job.
+
+4. `run: ./scripts/run-checks.sh smoke` fails on `ubuntu-latest` with a permission error, even though the file is committed and the path is right. Explain why, and give two ways to fix it.
+
+5. Explain the difference between `${{ inputs.tag }}` and `$TAG` inside a `run:` block — specifically *when* each one is resolved — and describe the safer pattern for getting a workflow input into a shell command.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -216,6 +241,8 @@ You can also set `shell: python` to make the whole `run:` block a Python script:
 | Beginner | Add a step that runs `python -c` to print today's date. | Logs show the printed date. |
 | Intermediate | Add a `.sh` script that takes a tag argument and run it. | Script prints the tag and a behave command. |
 | Challenge | Add a Windows job that runs the same Python file via `cmd` with `%VAR%`. | Windows step runs the script using a cmd environment variable. |
+
+Solutions: [`solutions/module-09-solutions.md`](../solutions/module-09-solutions.md)
 
 ---
 

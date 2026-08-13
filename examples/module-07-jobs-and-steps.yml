@@ -46,10 +46,10 @@ jobs:
     timeout-minutes: 15                            # cancel if it hangs past 15 min
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -81,10 +81,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -96,11 +96,11 @@ jobs:
         env:
           BROWSER: chrome
         run: |
-          behave --tags=$TEST_TAGS \
-            -D browser=$BROWSER \
+          behave --tags="$TEST_TAGS" \
+            -D browser="$BROWSER" \
             --no-capture \
             -f allure_behave.formatter:AllureFormatter \
-            -o $ALLURE_RESULTS
+            -o "$ALLURE_RESULTS"
 
       - name: Upload Allure results
         if: always()
