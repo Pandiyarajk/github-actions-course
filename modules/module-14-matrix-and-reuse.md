@@ -149,6 +149,102 @@ jobs:
         working-directory: your-solution-root-folder-name
 ```
 
+### Refining a Matrix: `include` and `exclude`
+
+The matrix above produces 2 servers × 3 browsers = 6 jobs. Two keys reshape that
+product rather than replacing it, and the order they are applied is what confuses
+people: **`exclude` is applied first, then `include`** — so an `include` can add
+back a combination `exclude` just removed.
+
+```yaml
+    strategy:
+      fail-fast: false
+      matrix:
+        server: [server1, server2]
+        browser: [chrome, firefox, msedge]
+
+        # Removes combinations from the product. msedge only exists on server1,
+        # so the server2 leg would queue forever against a runner that cannot
+        # serve it. 6 legs becomes 5.
+        exclude:
+          - server: server2
+            browser: msedge
+
+        # Two distinct behaviours, depending on whether the entry matches an
+        # existing leg:
+        include:
+          # MATCHES an existing leg -> adds a variable to just that leg.
+          # Does not create a new job.
+          - server: server1
+            browser: chrome
+            tags: regression-extended
+
+          # Matches NO existing leg -> creates one additional job. 5 becomes 6.
+          - server: server3
+            browser: chrome
+            tags: smoke
+```
+
+`matrix.tags` is then defined on some legs and an empty string on others, which
+is the usual reason a "matrix variable is empty" bug appears. Give it a default
+in the step rather than assuming every leg has it:
+
+```yaml
+      - name: Run suite
+        env:
+          TAGS: ${{ matrix.tags || 'regression' }}
+        run: |
+          behave --tags="$TAGS" -D browser="${{ matrix.browser }}"
+```
+
+### Dynamic Matrix from a Job Output
+
+A matrix does not have to be hard-coded. `fromJSON()` turns a JSON string into a
+real matrix, which lets one job decide what the next one fans out over — useful
+when the browser list lives in a config file, or when only changed feature areas
+should be tested.
+
+```yaml
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      # A job output is always a STRING. It carries JSON as text; fromJSON in
+      # the consumer is what turns it back into a list.
+      browsers: ${{ steps.pick.outputs.browsers }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Decide which browsers to run
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            browsers='["chrome"]'                        # fast PR feedback
+          else
+            browsers='["chrome","firefox","msedge"]'     # full nightly sweep
+          fi
+          echo "browsers=${browsers}" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: discover
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: ${{ fromJSON(needs.discover.outputs.browsers) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run suite on ${{ matrix.browser }}
+        run: |
+          behave --tags=regression -D browser="${{ matrix.browser }}"
+```
+
+Two failure modes worth knowing. If the output is not valid JSON, the error names
+the *expression*, not the producing job, so it reads as a syntax error in the
+consumer. And if the JSON array is **empty**, the `test` job is skipped entirely
+rather than failing — which, if `test` is a required status check, means the gate
+silently passes (see Module 25).
+
 ### YAML Explanation
 
 - `fail-fast: false` lets all matrix jobs finish even if one browser fails.

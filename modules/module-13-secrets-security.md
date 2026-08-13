@@ -36,6 +36,16 @@ Secrets are locked notes. Your Behave/Selenium workflow can use them, but GitHub
 
 GitHub Actions supports repository secrets, environment secrets, organization secrets, variables, and environment protection rules. Secrets are accessed using `${{ secrets.SECRET_NAME }}`. Variables are accessed using `${{ vars.VAR_NAME }}`. In a Selenium + Behave web automation pipeline and a desktop/UI regression pipeline, secrets like `ZEPHYR_SCALE_TOKEN`, `JIRA_API_TOKEN`, and the SMTP/email credentials should use least-privilege permissions, protected environments, and short-lived tokens where possible.
 
+One property is worth stating plainly because it is routinely misread as a security control: **masking is a log filter, not access control.** GitHub redacts a secret's value where it recognises it in output, which stops accidental disclosure. It does nothing to stop a step that deliberately sends the value somewhere, because that step legitimately holds it. The only real control is not granting the secret to the job in the first place.
+
+> [!NOTE]
+> This module covers the **mechanics** — where secrets live, how they are scoped,
+> and how to read them safely. The **threat model** is [Module 24](./module-24-supply-chain-security.md):
+> `GITHUB_TOKEN` permissions, the `pull_request_target` fork-escalation pattern,
+> expression injection, and pinning third-party actions. Read them together.
+> Environment-scoped secrets and approval gates are covered in
+> [Module 25](./module-25-environments-approvals.md).
+
 ## Real-World Use Case
 
 The daily scheduled smoke-test workflow needs `ZEPHYR_SCALE_TOKEN` and `JIRA_API_TOKEN` to publish Behave results to Zephyr Scale and Jira, plus `EMAIL_USER`/`EMAIL_PASS`/`SMTP_HOST` to send the Allure report by email, but only approved maintainers should be able to run the production reporting stage.
