@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Start Selenium Grid
         run: docker compose -f your-solution-root-folder-name/docker-compose.yml up -d
       - name: Run Behave against grid
@@ -117,13 +117,13 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Cache pip packages
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: pip-${{ runner.os }}-${{ hashFiles('your-solution-root-folder-name/requirements.txt') }}
@@ -164,7 +164,7 @@ jobs:
 ### YAML Explanation
 
 - Pull requests and pushes to `main` both run the smoke suite.
-- `actions/cache@v5` restores pip packages keyed on `requirements.txt`.
+- `actions/cache@v6` restores pip packages keyed on `requirements.txt`.
 - Parallel chrome/firefox grid nodes speed up the Behave run.
 - The grid is torn down with `if: always()` so containers never leak.
 

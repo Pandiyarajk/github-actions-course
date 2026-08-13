@@ -120,7 +120,7 @@ jobs:
       scripts: ${{ steps.filter.outputs.scripts }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -140,8 +140,8 @@ jobs:
     if: ${{ needs.detect-changes.outputs.pageobjects == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Run static analysis on page objects
@@ -155,7 +155,7 @@ jobs:
     if: ${{ needs.detect-changes.outputs.steps == 'true' }}
     runs-on: [self-hosted, server1]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Run Behave smoke on self-hosted runner
         run: behave --tags=@smoke -f allure_behave.formatter:AllureFormatter -o allure-results
 ```
@@ -191,8 +191,8 @@ jobs:
   pageobjects-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - run: pylint your-solution-root-folder-name/pageobjects/
@@ -215,7 +215,7 @@ jobs:
   pageobjects-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: echo "Run page object checks after a folder-scoped push"
 ```
 
@@ -262,7 +262,7 @@ jobs:
   smoke:
     runs-on: [self-hosted, "${{ inputs.runner }}"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Run Behave smoke
         run: behave --tags=@smoke -D browser=${{ inputs.browser }} -f allure_behave.formatter:AllureFormatter -o allure-results
       - name: Upload Allure results

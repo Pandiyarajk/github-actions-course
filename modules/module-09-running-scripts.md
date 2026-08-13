@@ -108,7 +108,7 @@ The full example covers every common pattern across Linux and Windows runners: a
 
 ```yaml
 - name: Set up Python
-  uses: actions/setup-python@v6
+  uses: actions/setup-python@v7
   with:
     python-version: "3.13"
 

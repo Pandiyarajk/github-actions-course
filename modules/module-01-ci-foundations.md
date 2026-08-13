@@ -117,10 +117,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -144,8 +144,8 @@ jobs:
 - `pull_request` runs checks before code is merged.
 - `branches: [main]` limits the trigger to pull requests targeting `main`.
 - `permissions: contents: read` applies least privilege.
-- `actions/checkout@v6` downloads the repository onto the runner.
-- `actions/setup-python@v6` with `python-version: "3.13"` provisions the interpreter the Behave/Selenium suite expects.
+- `actions/checkout@v7` downloads the repository onto the runner.
+- `actions/setup-python@v7` with `python-version: "3.13"` provisions the interpreter the Behave/Selenium suite expects.
 - The context step prints safe runtime metadata.
 - The validation step is where real Behave runs, `pylint`, or duplicate checks go.
 

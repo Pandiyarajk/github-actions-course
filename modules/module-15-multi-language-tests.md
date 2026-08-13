@@ -77,9 +77,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Run sample tests
@@ -117,9 +117,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
@@ -137,9 +137,9 @@ jobs:
     needs: static-analysis
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
@@ -163,9 +163,9 @@ jobs:
         browser: [chrome, firefox, msedge]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
@@ -184,7 +184,7 @@ jobs:
 ### YAML Explanation
 
 - Each test LAYER gets its own job for clearer failures, all Python/Behave.
-- `actions/setup-python@v6` with `cache: pip` installs and caches the toolchain.
+- `actions/setup-python@v7` with `cache: pip` installs and caches the toolchain.
 - The `bdd-smoke` matrix fans out the Selenium suite across chrome, firefox, and msedge.
 - `if: always()` preserves Allure and JUnit reports even when tests fail.
 

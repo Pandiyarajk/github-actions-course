@@ -131,13 +131,13 @@ jobs:
     runs-on: ${{ matrix.server }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Cache pip
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('your-solution-root-folder-name/requirements.txt') }}
@@ -152,8 +152,8 @@ jobs:
 
 - `fail-fast: false` lets all matrix jobs finish even if one browser fails.
 - `matrix.server` selects which self-hosted runner (server1, server2) executes the job.
-- `actions/setup-python@v6` installs Python 3.13.
-- `actions/cache@v5` caches the pip download directory.
+- `actions/setup-python@v7` installs Python 3.13.
+- `actions/cache@v6` caches the pip download directory.
 
 ### Reusable Workflow Example
 
@@ -176,9 +176,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install and run Behave

@@ -117,9 +117,9 @@ jobs:
     runs-on: [self-hosted, server1]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Install dependencies
@@ -145,14 +145,14 @@ jobs:
     runs-on: [self-hosted, server1]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Download Allure report
         uses: actions/download-artifact@v8
         with:
           name: allure-report
           path: allure-results/
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
       - name: Create Zephyr Scale test cycle for release
