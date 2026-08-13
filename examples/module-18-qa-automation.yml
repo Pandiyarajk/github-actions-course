@@ -58,8 +58,8 @@ jobs:
           TEST_TAGS: ${{ github.event.inputs.tags || 'regression' }}
           TEST_BROWSER: ${{ matrix.browser }}
         run: |
-          behave --tags=$TEST_TAGS \
-            -D browser=$TEST_BROWSER \
+          behave --tags="$TEST_TAGS" \
+            -D browser="$TEST_BROWSER" \
             --no-capture \
             -f allure_behave.formatter:AllureFormatter \
             -o reports/allure-results

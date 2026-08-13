@@ -145,9 +145,13 @@ jobs:
           SCAN_RESULT: ${{ needs.secret-scan.result }}
         with:
           script: |
-            // Read from process.env rather than letting ${{ }} substitute into
-            // this script -- otherwise a hostile value breaks out of the
-            // JavaScript instead of the shell.
+            // Read from process.env rather than letting an expression
+            // substitute into this script -- otherwise a hostile value breaks
+            // out of the JavaScript instead of the shell.
+            //
+            // Note this comment does not itself contain an empty expression:
+            // `script:` is a string GitHub interpolates before running, so even
+            // inside a JS comment an empty `$\{{ }}` is a workflow syntax error.
             const results = {
               Tests: process.env.TEST_RESULT,
               'Secret scan': process.env.SCAN_RESULT,

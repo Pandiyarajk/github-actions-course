@@ -129,9 +129,11 @@ jobs:
     steps:
       - name: Summarize roll-out
         run: |
-          echo "### Multi-cloud deployment" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Release: ${{ needs.build-promote.outputs.release_id }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Image: ${{ needs.build-promote.outputs.image }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- AWS: ${{ needs.deploy-aws.result }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Azure: ${{ needs.deploy-azure.result }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- GCP: ${{ needs.deploy-gcp.result }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Multi-cloud deployment"
+            echo "- Release: ${{ needs.build-promote.outputs.release_id }}"
+            echo "- Image: ${{ needs.build-promote.outputs.image }}"
+            echo "- AWS: ${{ needs.deploy-aws.result }}"
+            echo "- Azure: ${{ needs.deploy-azure.result }}"
+            echo "- GCP: ${{ needs.deploy-gcp.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"

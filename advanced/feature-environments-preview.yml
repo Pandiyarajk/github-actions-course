@@ -49,7 +49,7 @@ jobs:
 
       - name: Package preview artifacts
         run: |
-          tar -czf preview-${PREVIEW_KEY}.tgz dist/
+          tar -czf "preview-${PREVIEW_KEY}.tgz" dist/
           echo "Prepared preview bundle preview-${PREVIEW_KEY}.tgz"
 
       - name: Deploy preview (replace with actual infra CLI)

@@ -140,6 +140,13 @@ jobs:
       - prepare-run
       - train-model
     runs-on: ubuntu-latest
+    # Bound at JOB level so the optional-push step's `if:` can actually read it.
+    # A step's own `env:` is not in scope for that step's `if:`, which is
+    # evaluated before the step environment is built -- so testing a step-level
+    # env var there always compares against an empty string and the step never
+    # runs. Silent, because an empty comparison is valid.
+    env:
+      MODEL_REGISTRY_TOKEN: ${{ secrets.MODEL_REGISTRY_TOKEN || '' }}
     steps:
       - name: Download training artifacts
         uses: actions/download-artifact@v8
@@ -149,16 +156,17 @@ jobs:
 
       - name: Emit metadata summary
         run: |
-          echo "### Training run summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Run ID: ${{ needs.prepare-run.outputs.run_id }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Dataset: ${{ needs.prepare-run.outputs.manifest_path }}" >> "$GITHUB_STEP_SUMMARY"
-          test -f outputs/metrics.json && cat outputs/metrics.json >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Training run summary"
+            echo "- Run ID: ${{ needs.prepare-run.outputs.run_id }}"
+            echo "- Dataset: ${{ needs.prepare-run.outputs.manifest_path }}"
+            test -f outputs/metrics.json && cat outputs/metrics.json
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # A colon followed by a space inside an unquoted scalar makes YAML read the
       # rest of the line as a nested mapping. Quote any `name:` containing ": ".
       - name: "Optional: push to model registry"
+        # Reads the job-level env var declared above, not a step-level one.
         if: env.MODEL_REGISTRY_TOKEN != ''
-        env:
-          MODEL_REGISTRY_TOKEN: ${{ secrets.MODEL_REGISTRY_TOKEN || '' }}
         run: |
           echo "Push artifacts with registry CLI using token"

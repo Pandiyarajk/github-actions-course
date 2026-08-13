@@ -89,7 +89,7 @@ jobs:
           docker build \
             --pull \
             --tag "$IMAGE_NAME:$IMAGE_TAG" \
-            --build-arg BUILD_SHA=${GITHUB_SHA} \
+            --build-arg "BUILD_SHA=${GITHUB_SHA}" \
             .
 
       - name: Scan image with Trivy
@@ -153,10 +153,12 @@ jobs:
 
       - name: Attach digest to run summary
         run: |
-          echo "### Nightly security snapshot" >> "$GITHUB_STEP_SUMMARY"
-          echo "* Critical: ${{ steps.summary.outputs.critical }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "* High: ${{ steps.summary.outputs.high }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "* Image tag: ${{ env.IMAGE_TAG }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Nightly security snapshot"
+            echo "* Critical: ${{ steps.summary.outputs.critical }}"
+            echo "* High: ${{ steps.summary.outputs.high }}"
+            echo "* Image tag: ${{ env.IMAGE_TAG }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Open issue when thresholds exceeded
         if: ${{ steps.summary.outputs.critical != '0' }}
