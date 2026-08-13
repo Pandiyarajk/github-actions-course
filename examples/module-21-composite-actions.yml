@@ -1,0 +1,129 @@
+# Module 21: Composite actions — extracting a repeated preamble
+#
+# Demonstrates, in one file, the two ways to share work and why they are not
+# interchangeable:
+#
+#   job `bdd-matrix`      calls a COMPOSITE ACTION from inside its steps, once
+#                         per matrix leg. The action shares the job's runner and
+#                         workspace, so it can install into the same venv the
+#                         later steps use.
+#
+#   job `merged-report`   calls a REUSABLE WORKFLOW, which brings its own job and
+#                         runner. It could not have been a composite action,
+#                         because it must run after the whole matrix completes.
+#
+# The action being called is a real one: .github/actions/setup-python-suite.
+name: module-21-composite-actions
+
+run-name: >-
+  Composite action demo on ${{ github.ref_name }}
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: "Python version to provision"
+        required: false
+        default: "3.13"
+        type: choice
+        options:
+          - "3.12"
+          - "3.13"
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Composite action, called once per matrix leg.
+  # ---------------------------------------------------------------------------
+  bdd-matrix:
+    name: BDD on ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, msedge]
+    steps:
+      # MUST come first. A local action is read from the runner's filesystem, so
+      # the checkout is what makes .github/actions/ exist at all. Putting this
+      # second produces "Can't find 'action.yml'", which reads like a bad path
+      # but is really a missing checkout.
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python suite
+        id: setup
+        uses: ./.github/actions/setup-python-suite
+        with:
+          # `inputs.python-version` is only populated on workflow_dispatch; the
+          # `||` supplies a default for the pull_request trigger.
+          python-version: ${{ inputs.python-version || '3.13' }}
+          working-directory: your-solution-root-folder-name
+          extra-packages: allure-behave webdriver-manager
+
+      # Every action output is a STRING. `if: steps.setup.outputs.cache-hit`
+      # would be truthy for the string "false" too, so compare explicitly.
+      - name: Note cache outcome
+        run: |
+          if [ "${{ steps.setup.outputs.cache-hit }}" = "true" ]; then
+            echo "pip cache restored — install was a no-op"
+          else
+            echo "cache miss — dependencies were downloaded"
+          fi
+          echo "Python in use: ${{ steps.setup.outputs.python-version }}"
+
+      - name: Run BDD suite
+        working-directory: your-solution-root-folder-name
+        env:
+          BROWSER: ${{ matrix.browser }}
+        run: |
+          behave --tags=regression \
+            -D browser="$BROWSER" \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          # Unique per leg: artifacts are immutable from v4 onwards, so two legs
+          # uploading the same name is an error rather than a merge.
+          name: allure-${{ matrix.browser }}
+          path: your-solution-root-folder-name/reports/allure-results/
+          retention-days: 30
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Reusable workflow. This is the case a composite action CANNOT cover: it needs
+  # `needs:` to wait for the whole matrix, and it brings its own runner.
+  # ---------------------------------------------------------------------------
+  merged-report:
+    name: Merge Allure results
+    needs: bdd-matrix
+    if: always()
+    uses: ./.github/workflows/generate-allure-report.yml
+    with:
+      environment: pull-request
+      results-pattern: allure-*
+    secrets: inherit
+
+  # ---------------------------------------------------------------------------
+  # Consume the reusable workflow's declared outputs.
+  # ---------------------------------------------------------------------------
+  announce:
+    name: Announce report
+    needs: merged-report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print report details
+        run: |
+          {
+            echo "## Composite action demo"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Report artifact | ${{ needs.merged-report.outputs.report-artifact }} |"
+            echo "| Scenarios merged | ${{ needs.merged-report.outputs.scenario-count }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

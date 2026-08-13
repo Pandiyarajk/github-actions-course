@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 6](./module-06-runner-setup.md) | [Next: Module 8](./module-08-env-and-secrets.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-07-jobs-and-steps.yml`](../examples/module-07-jobs-and-steps.yml)
+> Solutions: [`module-07-solutions.md`](../solutions/module-07-solutions.md)
 
 ## Learning Objectives
 
@@ -54,6 +55,25 @@ A QA pipeline splits work into a fast `static-analysis` job on `ubuntu-latest` (
 - Splitting trivial work into many jobs that each repeat setup.
 - Putting a huge `timeout-minutes` on everything (hung jobs hold runners).
 - Defining workflow-level `env` for values only one step needs.
+
+## Common Mistakes
+
+- Renaming the **job ID** when you only meant to change the display label. The ID is referenced by `needs:`, by required status checks in branch protection, and by the API — renaming it silently breaks the dependency or leaves a required check permanently pending. Change `name:` instead.
+- Expecting a later job to see files a previous job created. Each job gets its own runner and workspace; `needs:` orders jobs, it does not share a filesystem. Move data with artifacts or job outputs.
+- Omitting `timeout-minutes` and relying on the default. A job with no timeout inherits the 360-minute default and can hold a self-hosted runner for six hours before it is cut off.
+- Reading a job-level `env` value inside `runs-on:` or `timeout-minutes:`. The `env` context is not available in those job-level keys; use `inputs` or a workflow-level expression instead.
+- Assuming a step-level `env` entry leaks into the next step. It does not — its scope is exactly one step.
+- Using `continue-on-error: true` to silence a genuinely failing step. The job reports success and the failure disappears from the summary.
+- Writing `needs: [static-analysis]` and expecting the second job to run when the first fails. A failed dependency skips the dependent job unless you add an `if: always()`-style condition.
+
+## Debugging Tips
+
+- "Job depends on unknown job" almost always means a `needs:` value is spelled with the display `name` rather than the job ID. Compare against the `jobs:` map keys, not the UI.
+- A job that never starts is usually a `runs-on` label mismatch, not a syntax error. The Actions UI shows it as waiting for a runner, with the requested labels listed.
+- To find out which `env` scope actually won, add `- run: env | sort` (or `Get-ChildItem Env: | Sort-Object Name` on Windows) as a temporary step. Guessing about precedence takes longer than printing it.
+- A job cancelled at a suspiciously round number of minutes hit `timeout-minutes`; the log line names the timeout rather than a failing command.
+- `env | sort` also confirms whether a secret reached the job — the value is masked, but a missing variable is absent entirely, which distinguishes "not set" from "wrong value".
+- When a self-hosted job behaves differently from an identical hosted one, print `$RUNNER_NAME` and the tool versions early. The difference is almost always the pre-installed toolchain rather than the workflow.
 
 ## Scope and Naming Reference
 
@@ -175,6 +195,30 @@ The most specific scope wins if the same variable name is defined more than once
 - `bdd-regression` runs on the chosen server after analysis passes.
 - Step-level `BROWSER` and job-level `TEST_TAGS` resolve correctly in the Behave command.
 
+## Quiz
+
+1. A workflow defines `TEST_TAGS: smoke` at workflow level, `TEST_TAGS: regression` on the job, and `TEST_TAGS: nightly` on one step. What does that step's `run:` block see in `$TEST_TAGS`?
+   - **A.** `smoke` — the workflow level is the outermost scope and wins.
+   - **B.** `regression` — job level always overrides step level.
+   - **C.** `nightly` — the narrowest scope wins.
+   - **D.** All three, concatenated in declaration order.
+
+2. You rename a job from `bdd-regression:` to `bdd_regression:` because you prefer underscores, leaving `name: BDD Regression on server4` untouched. What breaks?
+   - **A.** Nothing — the job ID is cosmetic once `name:` is set.
+   - **B.** Any `needs: bdd-regression` reference and any branch-protection required check that names the old ID.
+   - **C.** Only the API, since the UI reads `name:`.
+   - **D.** `runs-on` stops resolving self-hosted labels.
+
+3. A `static-analysis` job writes `pylint.txt`, and a `bdd-regression` job with `needs: static-analysis` cannot read it. What is the correct fix?
+   - **A.** Add `timeout-minutes` to the first job so it finishes writing.
+   - **B.** Declare `pylint.txt` in workflow-level `env`.
+   - **C.** Upload it as an artifact in the first job and download it in the second, or pass the value as a job output.
+   - **D.** Give both jobs the same `runs-on` label so they share a workspace.
+
+4. A self-hosted BDD job with no `timeout-minutes` hangs on a browser dialog. Describe what happens to the job and to the runner, and explain what you would set instead and why the value differs from a lint job's.
+
+5. Explain the difference between a job ID and a job `name`, and give one concrete situation for each where using the wrong one produces a confusing failure.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -182,6 +226,8 @@ The most specific scope wins if the same variable name is defined more than once
 | Beginner | Add a `name` and `timeout-minutes` to a job. | UI shows the name; job cancels if it exceeds the timeout. |
 | Intermediate | Add job-level `env` and use it in a step. | Step reads the job env variable. |
 | Challenge | Add a second job with `needs` that runs on a self-hosted server label. | Second job runs only after the first passes, on the chosen runner. |
+
+Solutions: [`solutions/module-07-solutions.md`](../solutions/module-07-solutions.md)
 
 ---
 

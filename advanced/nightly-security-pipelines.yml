@@ -47,13 +47,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      # There is no `github.default_branch` context property -- the expression
+      # silently evaluated to an empty string, making this `git fetch origin`
+      # with no ref and `base-ref: origin/`. The default branch lives on the
+      # event payload instead. An invalid context path is not an error; it is an
+      # empty string, which is why this failed quietly rather than loudly.
       - name: Fetch base branch for diff
-        run: git fetch origin ${{ github.default_branch }}
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: git fetch origin "$DEFAULT_BRANCH"
 
       - name: Run dependency review
         uses: actions/dependency-review-action@v4
         with:
-          base-ref: origin/${{ github.default_branch }}
+          base-ref: origin/${{ github.event.repository.default_branch }}
           head-ref: HEAD
           allow-licenses: Apache-2.0,MIT,BSD-3-Clause
           fail-on-severity: high
@@ -86,7 +93,13 @@ jobs:
             .
 
       - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@0.21.3
+        # Pinned to a full commit SHA with the version in a comment. This
+        # reference previously read `@0.21.3`, which no longer resolves at all:
+        # upstream moved to a `v`-prefixed tag scheme, so the old pin 404s at
+        # runtime with "unable to resolve action" while passing both a numeric
+        # review and actionlint. A stale pin can become a nonexistent one --
+        # see Module 24 and the `action-version-review` skill.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           format: sarif

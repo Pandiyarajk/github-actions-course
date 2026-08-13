@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 14](./module-14-matrix-and-reuse.md) | [Next: Module 16](./module-16-docker-performance.md)
 > Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-15-multi-language-tests.yml`](../examples/module-15-multi-language-tests.yml)
+> Solutions: [`module-15-solutions.md`](../solutions/module-15-solutions.md)
 
 ## Learning Objectives
 
@@ -194,6 +195,30 @@ jobs:
 - Allure and JUnit reports upload even when tests fail.
 - Pull request clearly shows which layer or browser failed.
 
+## Quiz
+
+1. Why must the Allure upload step carry `if: always()`?
+   - **A.** Without it the upload runs before Behave finishes.
+   - **B.** A step with no `if:` is skipped once an earlier step in the job has failed — which is exactly the run whose evidence you need.
+   - **C.** `always()` compresses the artifact, so the upload is faster.
+   - **D.** Artifacts are only retained when the step declares a condition.
+
+2. `behave` fails immediately with `ModuleNotFoundError: No module named 'allure_behave'`, although `behave` itself runs. What is the cause?
+   - **A.** The Allure command-line tool is not on `PATH`.
+   - **B.** `allure-behave` is not installed — it is a separate package from `behave` and must be in `requirements.txt` or installed explicitly.
+   - **C.** `-f allure_behave.formatter:AllureFormatter` is the wrong formatter name in current Behave versions.
+   - **D.** The `-o` output directory does not exist yet.
+
+3. `static-analysis` fails on a pylint error. `api-tests` declares `needs: static-analysis`. What happens to `api-tests`?
+   - **A.** It runs anyway, because `needs:` only controls ordering.
+   - **B.** It is skipped, and the pull request shows it as skipped rather than failed.
+   - **C.** It is marked failed without executing any step.
+   - **D.** It runs, but its artifacts are discarded.
+
+4. One Selenium scenario fails roughly one run in five for timing reasons. A teammate proposes `continue-on-error: true` on the `bdd-smoke` job. Explain what that actually does to the pull request signal, and describe a better handling of a known-flaky scenario.
+
+5. Three matrix legs each produce Allure results. Describe how to name the uploads so they do not collide, and how a later job collects all three into one report.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -201,6 +226,8 @@ jobs:
 | Beginner | Add a workflow that runs one behave command. | Test job appears on pull requests. |
 | Intermediate | Upload an Allure results artifact. | Artifact is available after workflow run. |
 | Challenge | Split static analysis, API, and BDD smoke into separate jobs with a browser matrix. | Each test layer has its own check. |
+
+Solutions: [`solutions/module-15-solutions.md`](../solutions/module-15-solutions.md)
 
 ---
 

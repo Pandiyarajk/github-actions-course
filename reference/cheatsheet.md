@@ -143,9 +143,68 @@ permissions:
 | Cache pip packages | `actions/cache@v6` |
 | Upload artifact | `actions/upload-artifact@v7` |
 | Download artifact | `actions/download-artifact@v8` |
-| Docker build | `docker/build-push-action@v6` |
-| Docker login | `docker/login-action@v3` |
+| Docker build | `docker/build-push-action@v7` |
+| Docker login | `docker/login-action@v4` |
+| Docker buildx setup | `docker/setup-buildx-action@v4` |
+| Docker image tags/labels | `docker/metadata-action@v6` |
+| GitHub API from a workflow | `actions/github-script@v9` |
 | Path filtering | `dorny/paths-filter@v3` |
+
+> [!NOTE]
+> First-party `actions/*` are **independently versioned** — their current majors
+> span five numbers — so there is no shared "generation" to track. Verify each
+> against `https://github.com/<owner>/<repo>/releases/latest`; the enforced table
+> lives in `PINNED_ACTIONS` in [`scripts/validate_course.py`](../scripts/validate_course.py).
+
+### Contexts
+
+Available expression contexts, and the ones people reach for that do not exist.
+
+| Context | Holds | Notable |
+| --- | --- | --- |
+| `github.*` | Event and repository metadata | `github.event.*` is **attacker-controlled** — never interpolate into `run:` |
+| `env.*` | Environment variables in scope | Workflow → job → step, narrowest wins |
+| `vars.*` | Repository/org/environment variables | Non-sensitive configuration |
+| `secrets.*` | Secrets in scope | Not available in a job-level `if:` |
+| `job.*` | The current job | `job.status`, `job.container`, `job.services` |
+| `jobs.*` | Reusable-workflow job results | Only inside `on.workflow_call.outputs` |
+| `steps.*` | Completed steps in this job | Requires the step to have an `id:` |
+| `needs.*` | Upstream job outputs and results | `needs.<id>.result`, `needs.<id>.outputs.*` |
+| `runner.*` | The runner | `runner.os`, `runner.arch`, `runner.temp` |
+| `strategy.*` | Matrix strategy | `strategy.job-index`, `strategy.fail-fast` |
+| `matrix.*` | Current matrix leg | Only inside a job with a `strategy.matrix` |
+| `inputs.*` | `workflow_dispatch` / `workflow_call` inputs | Typed for `workflow_call`, strings otherwise |
+
+Commonly-assumed properties that **do not exist** — each evaluates to an empty
+string rather than erroring, which is why they fail silently:
+
+| Wrong | Right |
+| --- | --- |
+| `github.default_branch` | `github.event.repository.default_branch` |
+| `github.branch` | `github.ref_name` |
+| `github.pr_number` | `github.event.pull_request.number` |
+| `steps.<id>.output` | `steps.<id>.outputs.<name>` |
+| `secrets.*` in a job-level `if:` | Set an output in an earlier job, gate on that |
+
+All context values are **strings**. `if: steps.x.outputs.flag` is truthy even
+when the value is the string `"false"` — compare with `== 'true'`.
+
+### Runner Cost and Minute Multipliers
+
+| Runner | Multiplier | Notes |
+| --- | --- | --- |
+| Linux (`ubuntu-*`) | 1× | Baseline |
+| Windows (`windows-*`) | 2× | Same wall-clock time costs twice as much |
+| macOS (`macos-*`) | 10× | Reserve for genuinely Apple-only work |
+| Self-hosted | 0× | Consumes no billed minutes; you own the machine |
+
+- Minutes are rounded up **per job**, not per workflow. Twelve 15-second jobs
+  bill as 12 minutes, not 3.
+- The default job timeout is **360 minutes** — one hung job bills six hours.
+  Set `timeout-minutes` on every job.
+- `concurrency` with `cancel-in-progress: true` stops paying for superseded runs.
+- A matrix multiplies everything: 3 browsers × 4 servers is 12 billed jobs.
+- Artifact storage is billed separately; `retention-days` defaults to 90.
 
 ### Production Workflow Checklist
 

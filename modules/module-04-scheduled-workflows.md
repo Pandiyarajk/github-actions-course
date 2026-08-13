@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 3](./module-03-workflow-triggers.md) | [Next: Module 5](./module-05-runners.md)
 > Level: **Beginner** | Time: **90 min** | Example workflow: [`module-04-scheduled-workflows.yml`](../examples/module-04-scheduled-workflows.yml)
+> Solutions: [`module-04-solutions.md`](../solutions/module-04-solutions.md)
 
 ## Learning Objectives
 
@@ -162,6 +163,30 @@ GitHub uses UTC. Convert before committing:
 - The run logs the cadence label for the cron that fired.
 - Conditional steps run only for their matching schedule.
 
+## Quiz
+
+1. You merge a workflow with `on: schedule: - cron: "0 9 * * *"` and expect it at 9:00 AM in your own time zone (UTC+5:30). When does it actually run for you?
+   - **A.** 9:00 AM local — GitHub uses the repository owner's time zone.
+   - **B.** 2:30 PM local — cron is always UTC, so 09:00 UTC is 14:30 at UTC+5:30.
+   - **C.** 3:30 AM local — GitHub subtracts the offset.
+   - **D.** It never runs; `schedule` requires an explicit `timezone:` key.
+
+2. A cron schedule on a feature branch never fires. Why?
+   - **A.** Cron requires `workflow_dispatch` alongside it.
+   - **B.** Scheduled workflows run only from the repository's default branch, so the file must be merged there.
+   - **C.** The branch name must match `schedule/**`.
+   - **D.** Cron is disabled until the workflow has run manually once.
+
+3. Which cron expression runs every 30 minutes?
+   - **A.** `0 */30 * * *`
+   - **B.** `*/30 * * * *`
+   - **C.** `30 * * * *`
+   - **D.** `* */30 * * *`
+
+4. One workflow declares four `cron:` entries. Explain how many runs each cron produces, how a step can tell which cron fired, and why `github.event_name` is not enough to distinguish them.
+
+5. Your nightly regression is scheduled for `30 1 * * *` but the run history shows starts anywhere from 01:32 to 02:10 UTC, and one night it did not run at all. Explain why, and describe two design changes that keep the suite reliable despite this.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -169,6 +194,8 @@ GitHub uses UTC. Convert before committing:
 | Beginner | Add a daily schedule at your local 9:00 AM converted to UTC. | Workflow runs once per day at the correct UTC time. |
 | Intermediate | Add weekday and weekend schedules that print different messages. | Weekday and weekend runs log different output. |
 | Challenge | Add an every-6-hours schedule and branch logic using `github.event.schedule`. | Only the 6-hour cron triggers its dedicated step. |
+
+Solutions: [`solutions/module-04-solutions.md`](../solutions/module-04-solutions.md)
 
 ---
 

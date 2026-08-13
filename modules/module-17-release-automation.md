@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 16](./module-16-docker-performance.md) | [Next: Module 18](./module-18-qa-automation.md)
 > Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-17-release-automation.yml`](../examples/module-17-release-automation.yml)
+> Solutions: [`module-17-solutions.md`](../solutions/module-17-solutions.md)
 
 ## Learning Objectives
 
@@ -187,6 +188,30 @@ jobs:
 - The release job waits for production environment approval.
 - A Zephyr cycle and a GitHub Release tag point to the certified commit.
 
+## Quiz
+
+1. A release workflow must run automatically when a `v*` tag is pushed **and** be startable by hand for a hotfix. What is the correct `on:` block?
+   - **A.** Only one trigger is allowed per workflow, so you need two workflow files.
+   - **B.** `on:` with both `push: tags: ['v*']` and `workflow_dispatch:` — triggers are additive.
+   - **C.** `on: push: tags: ['v*']` plus a `repository_dispatch` shim, because `workflow_dispatch` is ignored on tag-triggered workflows.
+   - **D.** `on: release: types: [published]`, which covers manual runs automatically.
+
+2. `gh release create` fails with a 403 from a workflow whose `permissions:` block reads `contents: read`. What is the fix?
+   - **A.** Replace `GITHUB_TOKEN` with a personal access token; `GITHUB_TOKEN` can never create releases.
+   - **B.** Raise the job or workflow permission to `contents: write`.
+   - **C.** Add `releases: write`, the permission scope that governs releases.
+   - **D.** Add `deployments: write`, since a release is a deployment.
+
+3. You want a human to approve before the release job publishes. Where does that gate come from?
+   - **A.** A job-level `environment:` whose required reviewers are configured in repository settings.
+   - **B.** `approval: required` on the job.
+   - **C.** `concurrency` with `cancel-in-progress: false`, which pauses the job for review.
+   - **D.** A `workflow_dispatch` input named `approved`.
+
+4. The regression gate and the release job each install dependencies and run `behave`. Explain why re-running the suite in the release job undermines the release record, and what the release job should do instead.
+
+5. A release went out from a commit whose regression run had failed, because two release runs overlapped and the second one's tag pointed at the wrong commit. Name the two workflow-level controls that would have prevented this, and say what each one does.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -194,6 +219,8 @@ jobs:
 | Beginner | Create a manual release workflow. | Manual release runs successfully. |
 | Intermediate | Add a regression-gate job and a production environment. | Release waits for approval. |
 | Challenge | Create a Zephyr cycle and GitHub Release after the gate. | Cycle and release tag appear. |
+
+Solutions: [`solutions/module-17-solutions.md`](../solutions/module-17-solutions.md)
 
 ---
 

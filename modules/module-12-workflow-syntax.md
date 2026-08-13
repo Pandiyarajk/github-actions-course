@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 11](./module-11-misc-features.md) | [Next: Module 13](./module-13-secrets-security.md)
 > Level: **Beginner** | Time: **120 min** | Example workflow: [`module-12-workflow-syntax.yml`](../examples/module-12-workflow-syntax.yml)
+> Solutions: [`module-12-solutions.md`](../solutions/module-12-solutions.md)
 
 ## Learning Objectives
 
@@ -269,6 +270,30 @@ jobs:
 
 The summary supports Markdown, so tables, bullet lists, links, and short report sections work well.
 
+## Quiz
+
+1. The `lint` job writes `reports/pylint.txt`. The `test` job, which has `needs: lint`, cannot find the file. Why?
+   - **A.** `needs` only orders jobs; each job gets a fresh runner and an empty workspace, so files must travel via artifacts or cache.
+   - **B.** The file needs `chmod +x` before another job can read it.
+   - **C.** `needs` copies the workspace only when `fail-fast: false` is set.
+   - **D.** The path must be absolute for cross-job access.
+
+2. A job-level `if: ${{ secrets.ALLURE_TOKEN != '' }}` causes the job to be skipped even though the secret is set. Why?
+   - **A.** Secrets are masked, so any comparison against them returns `false`.
+   - **B.** The `secrets` context is not available in a job-level `if:`, so the expression sees an empty value.
+   - **C.** `!=` is not a valid operator in Actions expressions.
+   - **D.** Secret comparisons must use `contains()`.
+
+3. A step writes `echo "status=passed" >> "$GITHUB_ENV"` and then, in the **same** step, echoes `$status`. Nothing is printed. Why?
+   - **A.** `$GITHUB_ENV` needs `>>>` to flush immediately.
+   - **B.** Environment names written to `$GITHUB_ENV` must be uppercase to be exported.
+   - **C.** `$GITHUB_ENV` values are applied to *subsequent* steps, not the step that wrote them.
+   - **D.** The value has to be read as `${{ env.status }}`, which is never available in `run:`.
+
+4. Explain the difference between `${{ inputs.browser }}` and `$BROWSER` inside a `run:` block — which one GitHub substitutes before the shell starts, which one the shell resolves — and give the injection-safe pattern for passing a user-supplied input into a command.
+
+5. An Allure publish step must run only for pushes to `main`. Write the `if:` condition, and explain why `if: github.ref == 'main'` never matches.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -276,6 +301,8 @@ The summary supports Markdown, so tables, bullet lists, links, and short report 
 | Beginner | Add a second step that prints `github.actor`. | Logs show the triggering user. |
 | Intermediate | Create two jobs where one depends on the other. | Second job waits for first job. |
 | Challenge | Add an `if:` condition so the Allure publish step runs only on `main`. | Conditional step is skipped on other branches. |
+
+Solutions: [`solutions/module-12-solutions.md`](../solutions/module-12-solutions.md)
 
 ---
 

@@ -66,6 +66,8 @@ PINNED_ACTIONS: dict[str, str] = {
     # Third-party
     "docker/login-action": "v4",
     "docker/setup-buildx-action": "v4",
+    "docker/setup-qemu-action": "v4",
+    "docker/metadata-action": "v6",
     "docker/build-push-action": "v7",
 }
 
@@ -140,6 +142,12 @@ MODULE_FILE_RE = re.compile(r"^module-(?P<number>\d{2})-(?P<slug>.+)\.md$")
 #: An inline markdown link, ``[text](target)``. Nested brackets in link text are rare
 #: enough in this repo not to warrant a real parser.
 MD_LINK_RE = re.compile(r"\[[^\]]*\]\((?P<target>[^)]+)\)")
+
+#: An action reference written as inline code in prose, e.g. ``` `actions/cache@v6` ```.
+#: Requires an owner/name@ref shape so ordinary inline code is not matched.
+INLINE_ACTION_RE = re.compile(
+    r"`(?P<ref>[A-Za-z0-9._-]+/[A-Za-z0-9._/-]+@[A-Za-z0-9._-]+)`"
+)
 
 
 # --------------------------------------------------------------------------------------
@@ -261,11 +269,66 @@ def _iter_workflow_sources() -> list[Path]:
 # --------------------------------------------------------------------------------------
 
 
+def _iter_prose_action_refs(path: Path) -> list[tuple[int, str]]:
+    """Extract action references from markdown reference **tables**.
+
+    A version quoted in a "use this action" table is never executed, so nothing
+    catches it when it goes stale -- that is how ``docker/login-action@v3`` survived
+    in the cheat sheet after the pin moved to v4. This is the documentation half of
+    the pin check; :func:`_iter_action_refs` covers the executable half.
+
+    Only table rows are inspected. Ordinary prose routinely discusses versions
+    *historically* -- "``actions/checkout@v3`` lints clean", "from
+    ``upload-artifact@v4`` onward artifacts are immutable" -- and those references
+    are deliberately not the pinned version, so enforcing them would be wrong.
+    A table row may opt out with a trailing ``<!-- pin-exempt -->`` marker.
+    """
+    if path.suffix.lower() != ".md":
+        return []
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    refs: list[tuple[int, str]] = []
+    in_fence = False
+    for lineno, line in enumerate(lines, start=1):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        stripped = line.strip()
+        # A table row: starts and ends with a pipe. Not a separator row.
+        if not (stripped.startswith("|") and stripped.endswith("|")):
+            continue
+        if set(stripped) <= set("|- :"):
+            continue
+        if "pin-exempt" in stripped:
+            continue
+        for match in INLINE_ACTION_RE.finditer(line):
+            refs.append((lineno, match.group("ref")))
+    return refs
+
+
 def check_pins() -> CheckResult:
-    """Verify pinned actions use their required major version."""
+    """Verify pinned actions use their required major version.
+
+    Covers both executable references (``uses:`` in YAML and fenced YAML) and
+    versions quoted as inline code in prose, which drift silently because nothing
+    runs them.
+    """
     result = CheckResult(name="pins")
     for path in _iter_workflow_sources():
         result.scanned += 1
+        for lineno, reference in _iter_prose_action_refs(path):
+            parsed = ACTION_REF_RE.match(reference)
+            if not parsed:
+                continue
+            required = PINNED_ACTIONS.get(parsed.group("path"))
+            if required is not None and parsed.group("ref") != required:
+                result.failures.append(
+                    f"{_relative(path)}:{lineno}: prose mentions "
+                    f"`{reference}` but the pinned version is "
+                    f"`{parsed.group('path')}@{required}`"
+                )
         for lineno, reference in _iter_action_refs(path):
             parsed = ACTION_REF_RE.match(reference)
             if not parsed:
@@ -333,6 +396,61 @@ def check_structure() -> CheckResult:
     return result
 
 
+def _iter_yaml_blocks(path: Path) -> list[tuple[int, str]]:
+    """Return ``(start_line, block_text)`` for every fenced YAML block in a markdown file.
+
+    Blocks whose first non-blank line is indented are skipped: those are fragments
+    of a larger document (a bare ``steps:`` list, say) rather than standalone YAML,
+    and parsing them in isolation reports errors that are not real.
+    """
+    lines = path.read_text(encoding="utf-8").splitlines()
+    blocks: list[tuple[int, str]] = []
+    start: int | None = None
+    body: list[str] = []
+    for lineno, line in enumerate(lines, start=1):
+        if start is None:
+            if YAML_FENCE_RE.match(line):
+                start, body = lineno + 1, []
+            continue
+        if FENCE_END_RE.match(line):
+            first = next((item for item in body if item.strip()), "")
+            if first and not first[0].isspace():
+                blocks.append((start, "\n".join(body)))
+            start = None
+            continue
+        body.append(line)
+    return blocks
+
+
+def check_yaml_blocks() -> CheckResult:
+    """Verify every standalone fenced YAML block in the docs actually parses.
+
+    Catches the class of defect that a ``uses:`` grep cannot: an unquoted scalar
+    containing ``": "``, or a ``${{ }}`` expression at column 0 terminating a block
+    scalar. Both make a real workflow invalid, and both look fine when skimmed.
+    """
+    result = CheckResult(name="yaml-blocks")
+    try:
+        import yaml
+    except ImportError:  # pragma: no cover - PyYAML is a documented requirement
+        result.failures.append(
+            "PyYAML is not installed; run `pip install pyyaml` to enable this check"
+        )
+        return result
+
+    for path in _iter_markdown_files():
+        result.scanned += 1
+        for start_line, block in _iter_yaml_blocks(path):
+            try:
+                yaml.safe_load(block)
+            except yaml.YAMLError as exc:
+                detail = " ".join(str(exc).split())
+                result.failures.append(
+                    f"{_relative(path)}:{start_line}: YAML block does not parse -- {detail}"
+                )
+    return result
+
+
 def check_links() -> CheckResult:
     """Verify every relative markdown link resolves to a file that exists.
 
@@ -387,6 +505,7 @@ def check_pairing() -> CheckResult:
 CHECKS = {
     "pins": check_pins,
     "mutable": check_mutable,
+    "yaml-blocks": check_yaml_blocks,
     "links": check_links,
     "structure": check_structure,
     "pairing": check_pairing,

@@ -7,7 +7,7 @@
 <br/>
 
 [![Level](https://img.shields.io/badge/Level-Beginner→Advanced-1f6feb?style=for-the-badge)](modules/README.md)
-[![Modules](https://img.shields.io/badge/Modules-20-2da44e?style=for-the-badge)](modules/README.md)
+[![Modules](https://img.shields.io/badge/Modules-26-2da44e?style=for-the-badge)](modules/README.md)
 [![Format](https://img.shields.io/badge/Format-Self--Paced%20%2B%20Workshop-d29922?style=for-the-badge)](#-recommended-workshop-delivery)
 [![License](https://img.shields.io/badge/License-MIT-8957e5?style=for-the-badge)](LICENSE)
 
@@ -35,13 +35,29 @@ A practical, industry-ready GitHub Actions course for developers, QA engineers, 
 1. Read this page to understand the path.
 2. Open the [Module Study Guide](modules/README.md).
 3. Work through Modules 1-11 to learn the workflow file top-to-bottom (`name`, `on`, scheduling, runners, jobs, env/secrets, scripts, artifacts, and core controls).
-4. Continue with Modules 12-17 for applied CI/CD skills (syntax, secure pipelines, matrix/reuse, testing, Docker, releases).
-5. Finish with Modules 18-20 and the [Capstones](capstones/README.md) if you support QA, enterprise, and observability workflows.
+4. Continue with Modules 12-20 for applied CI/CD skills (syntax, secure pipelines, matrix/reuse, testing, caching, releases, QA automation, monorepos, observability).
+5. Take Modules 21-26 for platform, security, and operations topics (composite actions, containers, image publishing, supply-chain security, approvals, cost control).
+6. Finish with the [Capstones](capstones/README.md), checking your work against [Solutions](solutions/README.md) as you go.
 
 ```text
-Code Change -> GitHub Event -> Workflow -> Runner -> Job -> Step
-      -> Test / Build / Scan -> Artifact / Image -> Deploy / Notify
+Code Change -> GitHub Event -> Workflow -> Runner
+                                            |
+                          +-----------------+-----------------+
+                          |                 |                 |
+                        Job A             Job B             Job C     (parallel by default;
+                          |                 |                 |        `needs:` makes them wait)
+                       Step ->           Step ->           Step ->
+                    Test / Build / Scan / Lint / Publish
+                          |                 |                 |
+                          +-----------------+-----------------+
+                                            |
+                              Artifact / Image -> Deploy / Notify
 ```
+
+> [!NOTE]
+> Jobs run **in parallel** unless you declare `needs:`. Only *steps* are
+> strictly sequential. Module 7 covers the distinction, and Module 26 covers why
+> it matters for cost.
 
 ---
 
@@ -51,9 +67,10 @@ Code Change -> GitHub Event -> Workflow -> Runner -> Job -> Step
 | --- | --- | --- |
 | 📘 Study modules | [modules/](modules/README.md) | Main beginner-to-advanced learning path. |
 | ▶️ Runnable examples | [examples/](examples/) | YAML workflows paired with each module. |
+| 🔑 Solutions | [solutions/](solutions/README.md) | Worked answers for every quiz and lab, with the failure mode each one provokes. |
 | 🏆 Capstones | [capstones/](capstones/README.md) | Realistic final projects and evaluation rubrics. |
 | ✅ Assessments | [assessments/](assessments/README.md) | Final assessment, skill checklist, and review prompts. |
-| 📑 Reference | [reference/](reference/README.md) | Cheat sheets, advanced topics, debugging, and production checklists. |
+| 📑 Reference | [reference/](reference/README.md) | Cheat sheet, contexts table, advanced topics, debugging clinic, and production checklists. |
 | 🧪 Advanced workflow library | [advanced/](advanced/README.md) | Production-grade scenarios and reusable cloud deployment examples. |
 | 🔍 Production case studies | [case-studies/](case-studies/README.md) | Public-safe real-world workflow patterns rebuilt as learning modules. |
 
@@ -73,13 +90,15 @@ Code Change -> GitHub Event -> Workflow -> Runner -> Job -> Step
 
 ## 🧭 Learning Path
 
-The 20 modules follow the workflow file top-to-bottom (**Part A**), then apply it to real pipelines (**Part B**).
+The 26 modules follow the workflow file top-to-bottom (**Part A**), apply it to real pipelines
+(**Part B**), then cover the platform, security, and operational concerns that surround it
+(**Part C**).
 
 ```text
-Part A · Components (1–11)   ─▶   Part B · Applied CI/CD (12–20)   ─▶   🏆 Capstone
-name → on → runners → jobs        syntax → security → matrix →
-→ env → scripts → artifacts       testing → docker → release →
-→ controls                        QA → monorepo → notifications
+Part A · Components (1–11)  ─▶  Part B · Applied CI/CD (12–20)  ─▶  Part C · Platform (21–26)  ─▶  🏆 Capstone
+name → on → runners → jobs      syntax → security → matrix →        composite actions →
+→ env → scripts → artifacts     testing → caching → release →       containers → image publish →
+→ controls                      QA → monorepo → notifications       supply chain → approvals → cost
 ```
 
 ### Part A — Workflow Components
@@ -112,6 +131,17 @@ name → on → runners → jobs        syntax → security → matrix →
 | 19 | [Monorepos, Enterprise Patterns, and Self-Hosted Runners](modules/module-19-monorepo-best-practices.md) | 🔴 Advanced | 150 min |
 | 20 | [Notifications, Observability, Debugging, and Governance](modules/module-20-notifications.md) | 🔴 Advanced | 120 min |
 
+### Part C — Platform, Security, and Operations
+
+| # | Module | Level | ⏱️ Time |
+| :-: | --- | :-: | :-: |
+| 21 | [Composite Actions and Custom Actions](modules/module-21-composite-actions.md) | 🟡 Intermediate | 120 min |
+| 22 | [Container Jobs and Service Containers](modules/module-22-container-jobs.md) | 🟡 Intermediate | 120 min |
+| 23 | [Building and Publishing Docker Images](modules/module-23-docker-publish.md) | 🟡 Intermediate | 150 min |
+| 24 | [Supply Chain Security and `GITHUB_TOKEN`](modules/module-24-supply-chain-security.md) | 🔴 Advanced | 150 min |
+| 25 | [Environments, Approvals, and Branch Protection](modules/module-25-environments-approvals.md) | 🔴 Advanced | 150 min |
+| 26 | [Local Testing, Linting, and Cost Control](modules/module-26-local-testing-cost.md) | 🟡 Intermediate | 120 min |
+
 ---
 
 ## 🛠️ What Learners Will Build
@@ -139,6 +169,10 @@ Learners should finish the course able to:
 - Optimize slow workflows using caching, parallelization, path filters, and matrix tuning.
 - Debug failed workflows from logs, summaries, artifacts, and reruns.
 - Design production-ready deployment and QA automation workflows.
+- Package reusable logic as composite actions and reusable workflows, and choose correctly between them.
+- Recognize and defuse the fork-PR privilege-escalation and expression-injection patterns.
+- Gate deployments behind environments and reason about what a green required check actually proves.
+- Keep action versions current and control billed runner minutes.
 
 ---
 
@@ -152,7 +186,9 @@ Learners should finish the course able to:
 | 4 | Modules 12-14 | Syntax and expressions, secure pipelines, matrix and reuse |
 | 5 | Modules 15-17 | Automated testing, Docker and caching, release automation |
 | 6 | Modules 18-20 | QA automation, monorepos and self-hosted, notifications |
-| 7 | Capstone | Team implementation, review, and presentation |
+| 7 | Modules 21-23 | Composite actions, container and service jobs, publishing images |
+| 8 | Modules 24-26 | Supply-chain security, environments and approvals, local testing and cost |
+| 9 | Capstone | Team implementation, review, and presentation |
 
 ---
 
@@ -162,7 +198,7 @@ Learners should finish the course able to:
 | --- | --- | --- |
 | 📘 [Start the modules](modules/README.md) | ▶️ [Run workflow examples](examples/) | 🧪 [Advanced workflows](advanced/README.md) |
 | 🏆 [Complete capstones](capstones/README.md) | 📑 [Reference library](reference/README.md) | 🔍 [Production case studies](case-studies/README.md) |
-| ✅ [Skills and assessments](assessments/README.md) | | |
+| ✅ [Skills and assessments](assessments/README.md) | 🔑 [Lab solutions](solutions/README.md) | 🔧 [Debugging clinic](reference/debugging-clinic.md) |
 
 ---
 
@@ -178,6 +214,6 @@ It should be **understandable, secure, observable, fast enough for the team, and
 
 ⭐ **Star this repo if it helped you learn GitHub Actions.**
 
-[Modules](modules/README.md) · [Examples](examples/) · [Capstones](capstones/README.md) · [Reference](reference/README.md)
+[Modules](modules/README.md) · [Examples](examples/) · [Solutions](solutions/README.md) · [Capstones](capstones/README.md) · [Reference](reference/README.md)
 
 </div>

@@ -49,13 +49,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      # Uses this repo's own composite action rather than setup-python directly,
+      # so Module 21's teaching example is proven by the CI that validates the
+      # course rather than merely asserted to work. Note the checkout above must
+      # come first -- see the comment in the action itself.
+      - name: Set up Python suite
+        uses: ./.github/actions/setup-python-suite
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install yamllint
-        run: pip install --disable-pip-version-check yamllint
+          extra-packages: yamllint
 
       # actionlint is installed from its released binary rather than via a
       # third-party action: one less action to pin, and the version is explicit.
@@ -97,7 +99,10 @@ jobs:
         check:
           - pins
           - mutable
+          - yaml-blocks
           - links
+          - structure
+          - pairing
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -111,47 +116,37 @@ jobs:
         run: python scripts/validate_course.py --check ${{ matrix.check }}
 
   # ---------------------------------------------------------------------------
-  # Completeness: does every module carry the full teaching template and have a
-  # paired example and solutions file?
+  # Single aggregating check. Branch protection should require only THIS job.
   #
-  # Non-blocking for now. The `Quiz` section and the `solutions/` tree are being
-  # added module by module, and a permanently-red required check trains people
-  # to ignore it. Flip `continue-on-error` to false once both are complete --
-  # that is the last step of the course overhaul, not an optional tidy-up.
+  # Requiring the individual matrix legs directly would be fragile: a `skipped`
+  # required check does not block a merge, and renaming a leg silently detaches
+  # the protection rule. `if: always()` is what makes this job still run -- and
+  # still fail -- when an upstream job fails. See Module 25.
   # ---------------------------------------------------------------------------
-  content-completeness:
-    name: Template completeness (advisory)
+  gate:
+    name: Validation gate
+    if: always()
+    needs: [lint-workflows, validate-content]
     runs-on: ubuntu-latest
-    continue-on-error: true
+    timeout-minutes: 5
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Check module template and pairing
-        id: completeness
-        continue-on-error: true
+      - name: Verify upstream results
+        env:
+          LINT_RESULT: ${{ needs.lint-workflows.result }}
+          CONTENT_RESULT: ${{ needs.validate-content.result }}
         run: |
-          python scripts/validate_course.py \
-            --check structure --check pairing | tee completeness.txt
-
-      - name: Publish completeness report
-        if: always()
-        run: |
-          {
-            echo "## Module template completeness"
-            echo
-            if [ "${{ steps.completeness.outcome }}" = "success" ]; then
-              echo "All modules carry the full teaching template."
-            else
-              echo "Outstanding template gaps (advisory, not blocking):"
-              echo
-              echo '```'
-              cat completeness.txt
-              echo '```'
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          failed=0
+          for pair in "lint-workflows:$LINT_RESULT" "validate-content:$CONTENT_RESULT"; do
+            name="${pair%%:*}"
+            result="${pair#*:}"
+            case "$result" in
+              success|skipped)
+                echo "ok       $name ($result)"
+                ;;
+              *)
+                echo "::error::$name concluded '$result'"
+                failed=1
+                ;;
+            esac
+          done
+          exit "$failed"

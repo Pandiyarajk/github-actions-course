@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 13](./module-13-secrets-security.md) | [Next: Module 15](./module-15-multi-language-tests.md)
 > Level: **Intermediate** | Time: **120 min** | Example workflow: [`module-14-matrix-and-reuse.yml`](../examples/module-14-matrix-and-reuse.yml)
+> Solutions: [`module-14-solutions.md`](../solutions/module-14-solutions.md)
 
 ## Learning Objectives
 
@@ -216,6 +217,30 @@ jobs:
 - Each browser and server combination appears as a separate check.
 - Reusable workflow centralizes Behave and Allure logic.
 
+## Quiz
+
+1. Which statement about calling a reusable workflow is correct?
+   - **A.** It is called from a `steps:` list with `uses:`, like any Marketplace action.
+   - **B.** It is called from a `jobs:` list with `uses:`, and it brings its own `runs-on`.
+   - **C.** It can be inserted in the middle of an existing job's steps as long as `shell:` is declared.
+   - **D.** It must be copied into the caller repository before it can be used.
+
+2. A reusable workflow references `${{ secrets.ZEPHYR_SCALE_TOKEN }}`. The caller passes no `secrets:` block at all. What happens?
+   - **A.** The secret is inherited automatically, because the caller and the reusable workflow are in the same repository.
+   - **B.** The expression evaluates to an empty string; you must map the secret explicitly or use `secrets: inherit`.
+   - **C.** The run fails at load time with a missing-secret error.
+   - **D.** Secrets can never be reached inside a reusable workflow.
+
+3. Your `chrome`, `firefox`, and `msedge` legs run in one matrix. Chrome fails early and the other two legs are cancelled before finishing. What is the correct fix if you need every browser's result?
+   - **A.** Add `continue-on-error: true` to the job.
+   - **B.** Add `strategy.fail-fast: false`.
+   - **C.** Add `strategy.max-parallel: 3`.
+   - **D.** Add `if: always()` to the Behave step.
+
+4. You want the browser list to come from a JSON file in the repository instead of being hard-coded in `strategy.matrix`. Describe the mechanism: what the first job must produce, and how the second job consumes it.
+
+5. Your suite already has a composite action for the Python setup preamble. Now you want to share the whole "run Behave, generate Allure, upload the report" sequence — including its own runner and browser matrix — across four repositories. Reusable workflow or composite action? Justify it, and state the nesting limit that applies to the answer you chose.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -223,6 +248,8 @@ jobs:
 | Beginner | Create a matrix for chrome, firefox, and msedge. | Three job runs appear. |
 | Intermediate | Add server1 and server2 to the matrix. | Six job runs appear. |
 | Challenge | Move the Behave/Allure logic into a reusable workflow using `workflow_call`. | Caller workflow invokes shared workflow. |
+
+Solutions: [`solutions/module-14-solutions.md`](../solutions/module-14-solutions.md)
 
 ---
 

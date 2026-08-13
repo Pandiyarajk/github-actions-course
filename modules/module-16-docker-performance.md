@@ -4,6 +4,7 @@
 
 > Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 15](./module-15-multi-language-tests.md) | [Next: Module 17](./module-17-release-automation.md)
 > Level: **Intermediate** | Time: **150 min** | Example workflow: [`module-16-docker-performance.yml`](../examples/module-16-docker-performance.yml)
+> Solutions: [`module-16-solutions.md`](../solutions/module-16-solutions.md)
 
 ## Learning Objectives
 
@@ -174,6 +175,30 @@ jobs:
 - Allure results and screenshots are uploaded even when tests fail.
 - pip caching and parallel browser nodes improve future run speed.
 
+## Quiz
+
+1. A step guarded with `if: steps.pip-cache.outputs.cache-hit` runs on every run, including cache misses. Why?
+   - **A.** `cache-hit` is only set on self-hosted runners.
+   - **B.** `cache-hit` is the string `"true"` or `"false"`, and a non-empty string is truthy — compare with `== 'true'`.
+   - **C.** The condition needs to be wrapped in `success()`.
+   - **D.** The step `id` must match the action name for outputs to resolve.
+
+2. A cache key is written as `key: pip-${{ runner.os }}`, with no `hashFiles(...)` component. What goes wrong?
+   - **A.** The cache is never restored, because the key must include a hash.
+   - **B.** The first run saves an entry and every later run restores it; because a saved entry is immutable, added or upgraded packages are never written into the cache under that key.
+   - **C.** GitHub rejects the key at load time.
+   - **D.** Nothing — `restore-keys` compensates for the missing hash.
+
+3. You only need the pip download cache for a normal `setup-python` + `pip install -r requirements.txt` job. What is the simplest correct approach?
+   - **A.** `actions/cache@v6` on the installed `site-packages` directory.
+   - **B.** `cache: pip` on `actions/setup-python@v7`, which handles the path and the `requirements.txt` hash for you.
+   - **C.** `actions/cache@v6` with a key containing the current date, so the cache refreshes daily.
+   - **D.** `actions/upload-artifact@v7` on `~/.cache/pip`, downloaded again at the start of the next run.
+
+4. Explain what `restore-keys` gives you when the primary key misses, what `cache-hit` reports in that situation, and why the combination is still worth having.
+
+5. The nightly smoke suite takes 40 minutes. List the levers you would pull, in the order you would try them, and say what each one costs.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -181,6 +206,8 @@ jobs:
 | Beginner | Start a Selenium Grid with docker compose and run one Behave scenario. | Scenario passes against the grid hub. |
 | Intermediate | Cache pip and upload Allure results as artifacts. | Cache hit on rerun; artifact appears after run. |
 | Challenge | Add a firefox node and run chrome/firefox in parallel, capturing `page_load_times`. | Both browsers run; timing data uploaded. |
+
+Solutions: [`solutions/module-16-solutions.md`](../solutions/module-16-solutions.md)
 
 ---
 

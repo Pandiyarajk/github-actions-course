@@ -2,8 +2,9 @@
 
 ![Module](https://img.shields.io/badge/Module-20-1f6feb?style=flat-square) ![Part](https://img.shields.io/badge/Part%20B%20Applied-8957e5?style=flat-square) ![Level](https://img.shields.io/badge/Level-Advanced-cf222e?style=flat-square) ![Time](https://img.shields.io/badge/Time-120%20min-555?style=flat-square)
 
-> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 19](./module-19-monorepo-best-practices.md) | [Next: Capstones](../capstones/README.md)
+> Navigation: [Course Home](../README.md) | [Module Index](./README.md) | [Previous: Module 19](./module-19-monorepo-best-practices.md) | [Next: Module 21](./module-21-composite-actions.md)
 > Level: **Advanced** | Time: **120 min** | Example workflow: [`module-20-notifications.yml`](../examples/module-20-notifications.yml)
+> Solutions: [`module-20-solutions.md`](../solutions/module-20-solutions.md)
 
 ## Learning Objectives
 
@@ -258,6 +259,30 @@ jobs:
 - Success email is concise and sent only on green runs.
 - Job has scoped permissions, concurrency, and timeout protection.
 
+## Quiz
+
+1. How do you turn on step-level and runner-level debug logging for a workflow?
+   - **A.** Add `debug: true` under the workflow's `on:` block.
+   - **B.** Set `ACTIONS_STEP_DEBUG` and `ACTIONS_RUNNER_DEBUG` to `true` as repository secrets or variables — or use "Re-run with debug logging" in the UI, which is the per-run equivalent.
+   - **C.** Pass `--verbose` to the runner via `runs-on`.
+   - **D.** Set `ACTIONS_STEP_DEBUG` in the job's `env:` block.
+
+2. You add a `workflow_run` notification workflow on a feature branch and push. The nightly QA workflow completes, but the notifier never fires. Why?
+   - **A.** `workflow_run` only fires for workflows that finished successfully.
+   - **B.** `workflow_run` workflows are read from, and run against, the **default branch's** version of the file — a branch-only notifier does not exist yet as far as the trigger is concerned.
+   - **C.** `workflow_run` requires `permissions: actions: write`.
+   - **D.** The `workflows:` list must use the filename, not the workflow's `name:`.
+
+3. The `notify` job must download the artifact the watched run produced. Which detail makes that possible?
+   - **A.** Nothing extra — `download-artifact` finds it because the two runs share a commit.
+   - **B.** `run-id: ${{ github.event.workflow_run.id }}` plus a `github-token`, because the artifact belongs to a *different* workflow run.
+   - **C.** `merge-multiple: true`.
+   - **D.** Re-uploading the artifact from the notifier first.
+
+4. The nightly email currently goes out on every run, including green ones, and the team has stopped reading it. Describe what makes a notification actionable, and how you would express the send/skip decision in YAML.
+
+5. A scenario failed on the nightly run and the logs are not enough to explain it. Walk through the observability steps you would take, in order, to get to a diagnosis — and say which of them require a re-run versus which read evidence the original run already produced.
+
 ## Labs
 
 | Difficulty | Task | Expected Output |
@@ -266,6 +291,8 @@ jobs:
 | Intermediate | Add a Python `smtplib` failure email triggered via `workflow_run`. | Email sends on failure only and skips on success. |
 | Challenge | Add concurrency, timeout, scoped permissions, and debug notes. | Workflow follows production governance standards. |
 
+Solutions: [`solutions/module-20-solutions.md`](../solutions/module-20-solutions.md)
+
 ---
 
-[Previous: Module 19](./module-19-monorepo-best-practices.md) | [Module Index](./README.md) | [Next: Capstones](../capstones/README.md)
+[Previous: Module 19](./module-19-monorepo-best-practices.md) | [Module Index](./README.md) | [Next: Module 21](./module-21-composite-actions.md)
