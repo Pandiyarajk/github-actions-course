@@ -100,6 +100,7 @@ jobs:
           - pins
           - mutable
           - yaml-blocks
+          - tables
           - links
           - structure
           - pairing
