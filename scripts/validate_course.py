@@ -17,6 +17,8 @@ Checks
     No action is referenced by a mutable ref (``@main``, ``@master``, ``@HEAD``, or a
     bare branch name), unless allowlisted in :data:`MUTABLE_REF_ALLOWLIST`. Version
     tags and full SHAs are both acceptable.
+``tables``
+    Every markdown table row has the same cell count as its header.
 ``links``
     Every relative markdown link resolves to a file that exists. External URLs are
     skipped -- network flakiness in CI says nothing about the content.
@@ -142,6 +144,9 @@ MODULE_FILE_RE = re.compile(r"^module-(?P<number>\d{2})-(?P<slug>.+)\.md$")
 #: An inline markdown link, ``[text](target)``. Nested brackets in link text are rare
 #: enough in this repo not to warrant a real parser.
 MD_LINK_RE = re.compile(r"\[[^\]]*\]\((?P<target>[^)]+)\)")
+
+#: A pipe NOT preceded by a backslash -- i.e. a real table cell separator.
+UNESCAPED_PIPE_RE = re.compile(r"(?<!\\)\|")
 
 #: An action reference written as inline code in prose, e.g. ``` `actions/cache@v6` ```.
 #: Requires an owner/name@ref shape so ordinary inline code is not matched.
@@ -451,6 +456,52 @@ def check_yaml_blocks() -> CheckResult:
     return result
 
 
+def check_tables() -> CheckResult:
+    """Verify every markdown table row has the same cell count as its header.
+
+    GitHub Flavored Markdown splits table cells on ``|`` *before* parsing inline
+    code, so a pipe inside backticks still breaks the row and must be written
+    ``\\|``. The failure is silent and visual: the row renders with extra columns
+    and the content is mangled, which nothing else in this repo would catch.
+    """
+    result = CheckResult(name="tables")
+    for path in _iter_markdown_files():
+        result.scanned += 1
+        lines = path.read_text(encoding="utf-8").splitlines()
+        in_fence = False
+        block: list[tuple[int, str, int]] = []
+
+        def flush(rows: list[tuple[int, str, int]]) -> None:
+            if len(rows) < 2:
+                return
+            header = rows[0][2]
+            for lineno, text, count in rows[1:]:
+                if set(text) <= set("|- :"):  # separator row
+                    continue
+                if count != header:
+                    result.failures.append(
+                        f"{_relative(path)}:{lineno}: table row has {count} cell "
+                        f"separators but the header has {header} -- escape any "
+                        "literal pipe as `\\|`, including inside backticks"
+                    )
+
+        for lineno, raw in enumerate(lines + [""], start=1):
+            if raw.lstrip().startswith("```"):
+                in_fence = not in_fence
+                flush(block)
+                block = []
+                continue
+            if in_fence:
+                continue
+            stripped = raw.strip()
+            if stripped.startswith("|") and stripped.endswith("|"):
+                block.append((lineno, stripped, len(UNESCAPED_PIPE_RE.findall(stripped))))
+            else:
+                flush(block)
+                block = []
+    return result
+
+
 def check_links() -> CheckResult:
     """Verify every relative markdown link resolves to a file that exists.
 
@@ -506,6 +557,7 @@ CHECKS = {
     "pins": check_pins,
     "mutable": check_mutable,
     "yaml-blocks": check_yaml_blocks,
+    "tables": check_tables,
     "links": check_links,
     "structure": check_structure,
     "pairing": check_pairing,

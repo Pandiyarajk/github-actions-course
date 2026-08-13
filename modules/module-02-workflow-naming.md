@@ -72,7 +72,7 @@ A smoke-test workflow runs both on a schedule and manually. Scheduled runs shoul
 | Goal | `run-name` |
 | --- | --- |
 | Static text + ref | `Static Code Analysis - ${{ github.ref_name }}` |
-| Inputs with fallbacks | `Auto Trigger - Server 1 | ${{ inputs.batch || 'batch1' }} | ${{ inputs.browser || 'chrome' }}` |
+| Inputs with fallbacks | `Auto Trigger - Server 1 \| ${{ inputs.batch \|\| 'batch1' }} \| ${{ inputs.browser \|\| 'chrome' }}` |
 | Schedule vs manual | folded expression choosing a title by `github.event_name` |
 | Branch create/delete | folded expression using `format()` per event |
 
@@ -198,7 +198,7 @@ Use `>-` for multi-line `run-name` expressions so the title has no trailing blan
 | Difficulty | Task | Expected Output |
 | --- | --- | --- |
 | Beginner | Add `run-name` that appends `github.ref_name`. | Run title includes the branch name. |
-| Intermediate | Build a `run-name` from two inputs with `||` fallbacks. | Run title shows the chosen or default values. |
+| Intermediate | Build a `run-name` from two inputs with `\|\|` fallbacks. | Run title shows the chosen or default values. |
 | Challenge | Use a folded `>-` expression to title runs differently for schedule vs manual. | Scheduled and manual runs show distinct titles. |
 
 Solutions: [`solutions/module-02-solutions.md`](../solutions/module-02-solutions.md)
