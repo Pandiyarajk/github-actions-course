@@ -107,10 +107,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      # PyYAML is required by the `yaml-blocks` check, which parses every fenced
+      # YAML block in the documentation.
+      - name: Set up Python suite
+        uses: ./.github/actions/setup-python-suite
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          extra-packages: pyyaml
 
       - name: Run ${{ matrix.check }} check
         run: python scripts/validate_course.py --check ${{ matrix.check }}

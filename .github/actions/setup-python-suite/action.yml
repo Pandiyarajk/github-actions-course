@@ -68,16 +68,34 @@ outputs:
 runs:
   using: composite
   steps:
+    # `setup-python`'s `cache: pip` FAILS THE STEP if its dependency path matches
+    # nothing -- it does not warn and continue. So the file has to be detected
+    # before `setup-python` runs, not handled afterwards. Caching is skipped
+    # entirely when there is nothing to key the cache on.
+    - name: Detect requirements file
+      id: detect
+      shell: bash
+      run: |
+        path="${{ inputs.working-directory }}/${{ inputs.requirements-file }}"
+        if [ -f "$path" ]; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+          echo "path=${path}" >> "$GITHUB_OUTPUT"
+        else
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+          echo "path=" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Set up Python ${{ inputs.python-version }}
       id: setup
       uses: actions/setup-python@v7
       with:
         python-version: ${{ inputs.python-version }}
         # `cache: pip` is cheaper than a manual actions/cache step: it derives
-        # the key from the requirements file for you. The conditional below is
-        # an expression rather than an `if:` because `cache:` needs a value.
-        cache: ${{ inputs.enable-cache == 'true' && 'pip' || '' }}
-        cache-dependency-path: ${{ inputs.working-directory }}/${{ inputs.requirements-file }}
+        # the key from the requirements file for you. Both values are expressions
+        # rather than `if:` conditions, because `cache:` takes a value and an
+        # empty string means "no caching".
+        cache: ${{ (inputs.enable-cache == 'true' && steps.detect.outputs.exists == 'true') && 'pip' || '' }}
+        cache-dependency-path: ${{ steps.detect.outputs.path }}
 
     - name: Install suite dependencies
       shell: bash
@@ -88,12 +106,13 @@ runs:
       run: |
         python -m pip install --upgrade pip --disable-pip-version-check
 
-        if [ -f "${REQUIREMENTS_FILE}" ]; then
+        if [ "${{ steps.detect.outputs.exists }}" = "true" ]; then
           pip install --disable-pip-version-check -r "${REQUIREMENTS_FILE}"
         else
-          # A missing requirements file is a warning rather than an error so the
-          # action stays usable in a repo that installs its deps another way.
-          echo "::warning::No ${REQUIREMENTS_FILE} in $(pwd); skipping."
+          # A missing requirements file is a notice rather than an error so the
+          # action stays usable in a repo that installs its deps another way --
+          # including this one, whose CI only needs `extra-packages`.
+          echo "No ${REQUIREMENTS_FILE} in $(pwd); installing extra packages only."
         fi
 
         if [ -n "${EXTRA_PACKAGES}" ]; then
