@@ -1,0 +1,42 @@
+# =============================================================================
+# Dependabot configuration
+#
+# This file is both real configuration and teaching material for Module 26.
+#
+# The course pins every action to a major version and enforces those pins in CI
+# (`scripts/validate_course.py`). Pins alone go stale silently, though -- nothing
+# tells you upstream shipped a new major. Dependabot closes that loop by opening
+# the bump PR so the review is triggered rather than remembered.
+#
+# Note the ecosystem name is `github-actions`, and it only scans workflow files
+# under `.github/workflows/`. It will NOT see the `uses:` references in
+# `examples/`, `advanced/` or the markdown modules, which is precisely why this
+# repo also runs its own pin check.
+# =============================================================================
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    # Majors are grouped separately from patches: a patch bump is a rubber stamp,
+    # a major needs release notes read before merging (see the ESM break in
+    # `actions/github-script@v9`).
+    groups:
+      actions-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: scope
+    labels:
+      - dependencies
+      - github-actions

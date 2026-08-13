@@ -1,0 +1,132 @@
+# =============================================================================
+# Reusable workflow: merge Allure results from a matrix run into one report
+#
+# Called by `examples/module-14-matrix-and-reuse.yml`. It lives here rather than
+# in `examples/` because GitHub only resolves `workflow_call` targets that sit
+# under a repository's own `.github/workflows/` directory -- a local
+# `uses: ./examples/...` reference will not resolve, however sensible it looks.
+#
+# Doubles as the worked example for two things the modules cover:
+#   - `workflow_call` with typed inputs, secrets and outputs (Module 14)
+#   - artifact v4+ semantics: per-matrix-job unique names on upload, then
+#     `pattern` + `merge-multiple` on download (Module 10)
+# =============================================================================
+name: Generate Allure Report
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment label recorded in the report metadata."
+        required: true
+        type: string
+      results-pattern:
+        description: >-
+          Artifact name pattern holding the per-matrix Allure results. Each
+          matrix leg must upload under a UNIQUE name -- artifacts are immutable
+          from v4 onwards, so two legs writing the same name is an error rather
+          than a merge.
+        required: false
+        type: string
+        default: "allure-*"
+      retention-days:
+        description: "How long to keep the merged report."
+        required: false
+        type: number
+        default: 30
+    outputs:
+      report-artifact:
+        description: "Name of the artifact containing the merged HTML report."
+        value: ${{ jobs.report.outputs.artifact-name }}
+      report-url:
+        description: "Direct URL to the uploaded report artifact."
+        value: ${{ jobs.report.outputs.artifact-url }}
+      scenario-count:
+        description: "Total scenarios found across all merged result sets."
+        value: ${{ jobs.report.outputs.scenario-count }}
+    secrets:
+      SMTP_PASSWORD:
+        description: "Optional. When set, the report summary is emailed."
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    name: Merge and publish Allure report
+    runs-on: ubuntu-latest
+    outputs:
+      # The artifact name is our own composed value, not an action output --
+      # `upload-artifact` returns only `artifact-id`, `artifact-url` and
+      # `artifact-digest`, so referencing a non-existent `artifact-name` output
+      # would silently yield an empty string.
+      artifact-name: allure-report-${{ inputs.environment }}
+      artifact-url: ${{ steps.publish.outputs.artifact-url }}
+      scenario-count: ${{ steps.merge.outputs.scenario-count }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      # `merge-multiple: true` flattens every artifact matching `pattern` into a
+      # single directory. Without it each artifact lands in its own subdirectory
+      # and Allure sees several small result sets instead of one large one.
+      - name: Download all matrix Allure results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: ${{ inputs.results-pattern }}
+          merge-multiple: true
+          path: allure-results
+
+      - name: Summarise merged results
+        id: merge
+        run: |
+          count=$(find allure-results -name '*-result.json' -type f | wc -l)
+          echo "scenario-count=${count}" >> "$GITHUB_OUTPUT"
+          echo "Merged ${count} scenario result(s) for ${{ inputs.environment }}."
+
+          # An empty merge almost always means the matrix legs uploaded under
+          # names the pattern does not match. Fail loudly rather than publishing
+          # an empty report that reads as "nothing broke".
+          if [ "${count}" -eq 0 ]; then
+            echo "::error::No Allure results matched '${{ inputs.results-pattern }}'."
+            exit 1
+          fi
+
+      - name: Generate HTML report
+        run: |
+          pip install --disable-pip-version-check allure-behave
+          # `allure generate` needs the Allure CLI, which is a JVM tool; on a
+          # hosted runner it is already present at /usr/local/bin/allure on the
+          # `ubuntu-latest` image used here. Self-hosted runners must install it
+          # once -- see Module 6.
+          allure generate allure-results --clean -o allure-report
+          echo "Report written to allure-report/index.html"
+
+      - name: Publish report artifact
+        id: publish
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-report-${{ inputs.environment }}
+          path: allure-report/
+          retention-days: ${{ inputs.retention-days }}
+          if-no-files-found: error
+
+      - name: Record run summary
+        if: always()
+        run: |
+          {
+            echo "## Allure report — ${{ inputs.environment }}"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Scenarios merged | ${{ steps.merge.outputs.scenario-count }} |"
+            echo "| Report artifact | allure-report-${{ inputs.environment }} |"
+            echo "| Retention | ${{ inputs.retention-days }} days |"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Pull workflow history
         id: history
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           result-encoding: string
           script: |
@@ -52,11 +52,18 @@ jobs:
 
       - name: Write stats file
         id: write
+        # The step output is passed through `env:` rather than interpolated
+        # directly into the `run:` block. Two reasons, both worth copying:
+        #   1. A `${{ }}` expression substituted at column 0 would terminate the
+        #      `run: |` block scalar and make the whole file invalid YAML.
+        #   2. Interpolating untrusted content straight into a shell command is
+        #      the classic Actions script-injection vector. An env var is quoted
+        #      by the shell, never parsed as code.
+        env:
+          STATS_JSON: ${{ steps.history.outputs.result }}
         run: |
           mkdir -p qa
-          cat <<JSON > qa/flaky-summary.json
-${{ steps.history.outputs.result }}
-JSON
+          printf '%s\n' "$STATS_JSON" > qa/flaky-summary.json
           echo "stats_path=qa/flaky-summary.json" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact for portal
@@ -88,7 +95,7 @@ JSON
             https://qa-portal.example.com/api/flaky-insights
 
       - name: Open tracking issue when flakiness > 0.2
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');

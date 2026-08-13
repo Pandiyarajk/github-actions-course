@@ -37,7 +37,7 @@ jobs:
       run_id: ${{ steps.run_meta.outputs.run_id }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Resolve manifest + metadata
         id: manifest
@@ -78,7 +78,7 @@ jobs:
       DATASET_MANIFEST: ${{ needs.prepare-run.outputs.manifest_path }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download control plane inputs
         uses: actions/download-artifact@v8
@@ -87,7 +87,7 @@ jobs:
           path: control
 
       - name: Setup Python + CUDA deps
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.10"
 
@@ -154,7 +154,9 @@ jobs:
           echo "- Dataset: ${{ needs.prepare-run.outputs.manifest_path }}" >> "$GITHUB_STEP_SUMMARY"
           test -f outputs/metrics.json && cat outputs/metrics.json >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Optional: push to model registry
+      # A colon followed by a space inside an unquoted scalar makes YAML read the
+      # rest of the line as a nested mapping. Quote any `name:` containing ": ".
+      - name: "Optional: push to model registry"
         if: env.MODEL_REGISTRY_TOKEN != ''
         env:
           MODEL_REGISTRY_TOKEN: ${{ secrets.MODEL_REGISTRY_TOKEN || '' }}
