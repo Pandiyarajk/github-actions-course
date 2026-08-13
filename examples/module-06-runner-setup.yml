@@ -37,7 +37,7 @@ jobs:
           echo "Runner OS:   $RUNNER_OS"
           echo "Image label: ${{ inputs.runner_label }}"
           uname -a
-          cat /etc/os-release | grep PRETTY_NAME
+          grep PRETTY_NAME /etc/os-release
           python3 --version || true
 
       - name: Show runner OS and version (Windows)

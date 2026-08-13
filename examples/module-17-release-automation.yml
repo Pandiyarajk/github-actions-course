@@ -70,13 +70,20 @@ jobs:
         env:
           ZEPHYR_SCALE_TOKEN: ${{ secrets.ZEPHYR_SCALE_TOKEN }}
           ZEPHYR_CYCLE_ID: ${{ secrets.ZEPHYR_CYCLE_ID }}
+          # Declared here rather than assigned in the shell. A plain
+          # `version=...` assignment creates a SHELL variable, which is not
+          # exported, so `os.environ.get("version")` never saw it and the Python
+          # below silently printed the "auto" fallback on every release. Anything
+          # a child process must read has to be in `env:`.
+          RELEASE_VERSION: ${{ github.event.inputs.version || github.run_number }}
         run: |
-          version=${{ github.event.inputs.version || github.run_number }}
-          python -c "
+          python <<'PY'
           import os
-          # Create a new Zephyr cycle for this release version
-          print(f'Creating Zephyr cycle for release {os.environ.get(\"version\", \"auto\")}')
-          "
+
+          # Create a new Zephyr cycle for this release version.
+          version = os.environ["RELEASE_VERSION"]
+          print(f"Creating Zephyr cycle for release {version}")
+          PY
 
       - name: Create GitHub Release
         env:
